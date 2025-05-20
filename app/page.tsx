@@ -1,111 +1,134 @@
-import { Suspense } from "react"
-import { getFeaturedProducts } from "@/lib/products"
-import { ProductGrid } from "@/components/product-grid"
-import { LoadingLogo } from "@/components/loading-logo"
-import Image from "next/image"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { getFeaturedProducts } from "@/lib/products"
+import { ReviewCard } from "@/components/review-card"
+import { getReviews } from "@/lib/reviews"
+import { DbSetupNotification } from "@/components/db-setup-notification"
+import { Card, CardContent } from "@/components/ui/card"
+import { PlaceholderImage } from "@/components/placeholder-image"
+
+// Make the page dynamic to avoid static rendering issues
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export default async function Home() {
-  const featuredProducts = await getFeaturedProducts()
+  // Add console log to debug
+  console.log("Fetching featured products for homepage")
+
+  // Fetch featured products with error handling
+  let featuredProducts = []
+  let reviews = []
+
+  try {
+    featuredProducts = await getFeaturedProducts()
+    console.log(`Successfully fetched ${featuredProducts.length} featured products`)
+  } catch (error) {
+    console.error("Error in Home component:", error)
+  }
+
+  try {
+    console.log("Fetching reviews...")
+    reviews = await getReviews()
+    console.log(`Successfully fetched ${reviews.length} reviews`)
+  } catch (error) {
+    console.error("Error loading reviews:", error)
+    // Use empty array if there's an error
+  }
 
   return (
     <main className="flex-1">
-      {/* Hero Section with Background Image */}
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/background.png"
-            alt="Northern Chefs Background"
-            fill
-            className="object-cover opacity-30"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40"></div>
-        </div>
-        <div className="container mx-auto px-4 relative z-10 text-center">
-          <div className="flex justify-center mb-8">
-            <Image
-              src="/images/Nothernchefslogo.png"
-              alt="Northern Chefs Logo"
-              width={300}
-              height={120}
-              className="h-auto"
-              priority
-            />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">Authentic Filipino Cuisine</h1>
-          <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
-            Handcrafted with love and tradition. Taste the flavors of home with our premium homemade products.
+      {/* Database Setup Notification */}
+      <DbSetupNotification />
+
+      {/* Hero Section */}
+      <section className="bg-gold text-black py-16 md:py-24">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">Northern Chefs</h1>
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+            Authentic Filipino cuisine delivered to your doorstep. Experience the taste of home with our premium
+            handcrafted dishes.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link
-              href="/products"
-              className="bg-gold hover:bg-amber-600 text-black font-bold py-3 px-8 rounded-md transition-colors"
-            >
-              Shop Now
-            </Link>
-            <Link
-              href="/about"
-              className="bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-8 rounded-md border border-white/30 backdrop-blur-sm transition-colors"
-            >
-              Learn More
-            </Link>
+            <Button asChild size="lg" className="bg-black text-gold hover:bg-gray-800">
+              <Link href="/products">Shop Now</Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-black text-black hover:bg-black/10">
+              <Link href="/contact">Contact Us</Link>
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Featured Products Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Featured Products</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {featuredProducts.map((product) => (
+              <Card key={product.id} className="overflow-hidden transition-all hover:shadow-lg">
+                <div className="aspect-square relative">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url || "/placeholder.svg"}
+                      alt={product.name}
+                      className="object-cover w-full h-full"
+                      width={400}
+                      height={400}
+                    />
+                  ) : (
+                    <PlaceholderImage className="w-full h-full" />
+                  )}
+                  {product.is_bestseller && (
+                    <div className="absolute top-2 right-2 bg-gold text-black text-xs font-bold px-2 py-1 rounded">
+                      Bestseller
+                    </div>
+                  )}
+                </div>
+                <CardContent className="p-6">
+                  <h3 className="font-bold text-xl mb-2">{product.name}</h3>
+                  <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold">₱{product.price.toFixed(2)}</span>
+                    <Button asChild className="bg-gold hover:bg-amber-500 text-black">
+                      <Link href={`/products/${product.id}`}>View Details</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Button asChild size="lg" className="bg-gold hover:bg-amber-500 text-black">
+              <Link href="/products">View All Products</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center mb-12">
-            <h2 className="text-3xl font-bold text-center mb-4">Featured Products</h2>
-            <div className="w-24 h-24 mb-2">
-              <Image
-                src="/images/ChefGabrielslogo.png"
-                alt="Chef Gabriel's Logo"
-                width={96}
-                height={96}
-                className="w-full h-full"
-              />
+          <div className="flex flex-col md:flex-row items-center gap-12">
+            <div className="md:w-1/2">
+              <h2 className="text-3xl font-bold mb-6">Our Story</h2>
+              <p className="text-gray-600 mb-4">
+                Northern Chefs was born from a passion for authentic Filipino cuisine and a desire to share the rich
+                culinary traditions of the Philippines with food lovers everywhere.
+              </p>
+              <p className="text-gray-600 mb-6">
+                Our team of skilled chefs combines traditional recipes with modern techniques to create dishes that are
+                both authentic and innovative. We source only the finest ingredients to ensure that every bite delivers
+                the true taste of Filipino hospitality.
+              </p>
+              <Button asChild className="bg-gold hover:bg-amber-500 text-black">
+                <Link href="/contact">Learn More</Link>
+              </Button>
             </div>
-            <p className="text-gray-600 text-center max-w-2xl">
-              Chef Gabriel's premium handcrafted Filipino dishes, made with authentic recipes and the finest
-              ingredients.
-            </p>
-          </div>
-          <Suspense
-            fallback={
-              <div className="flex flex-col items-center justify-center py-12">
-                <LoadingLogo size="medium" showText={true} />
-                <p className="mt-4 text-gray-500 animate-pulse">Loading featured products...</p>
+            <div className="md:w-1/2">
+              <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+                <PlaceholderImage className="w-full h-full" />
               </div>
-            }
-          >
-            <ProductGrid products={featuredProducts} />
-          </Suspense>
-        </div>
-      </section>
-
-      {/* About Section with Background Image */}
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image src="/images/background2.png" alt="Chef Gabriel's Products" fill className="object-cover opacity-30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40"></div>
-        </div>
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-6 text-white">Our Story</h2>
-            <p className="text-white/90 mb-8">
-              Northern Chefs started as a small family business with a passion for authentic Filipino cuisine. Today, we
-              continue to create homemade products using traditional recipes passed down through generations, bringing
-              the taste of Filipino heritage to your table.
-            </p>
-            <Link
-              href="/contact"
-              className="inline-block bg-gold hover:bg-amber-600 text-black font-bold py-3 px-8 rounded-md transition-colors"
-            >
-              Contact Us
-            </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -115,7 +138,7 @@ export default async function Home() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">What Our Customers Say</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <Card className="p-6">
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 bg-gold rounded-full flex items-center justify-center text-black font-bold text-xl mr-4">
                   J
@@ -145,8 +168,8 @@ export default async function Home() {
                 "The Chicken Pastil is absolutely delicious! It reminds me of home and the flavors are spot on. Will
                 definitely order again!"
               </p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            </Card>
+            <Card className="p-6">
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 bg-gold rounded-full flex items-center justify-center text-black font-bold text-xl mr-4">
                   M
@@ -176,8 +199,8 @@ export default async function Home() {
                 "I ordered the Laing and it was amazing! The delivery was prompt and the packaging kept everything
                 fresh. Northern Chefs has become my go-to for Filipino food."
               </p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            </Card>
+            <Card className="p-6">
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 bg-gold rounded-full flex items-center justify-center text-black font-bold text-xl mr-4">
                   R
@@ -207,7 +230,7 @@ export default async function Home() {
                 "The Spanish Bangus is a must-try! The fish was perfectly cooked and the flavors were incredible. I've
                 already recommended Northern Chefs to all my friends."
               </p>
-            </div>
+            </Card>
           </div>
         </div>
       </section>
@@ -219,12 +242,81 @@ export default async function Home() {
           <p className="text-xl mb-8 max-w-3xl mx-auto">
             Order now and enjoy the rich flavors of the Philippines delivered straight to your door.
           </p>
-          <Link
-            href="/products"
-            className="bg-gold hover:bg-amber-600 text-black font-bold py-3 px-8 rounded-md transition-colors"
-          >
-            Order Now
-          </Link>
+          <Button asChild size="lg" className="bg-gold hover:bg-amber-500 text-black">
+            <Link href="/products">Order Now</Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="bg-gray-100 py-16">
+        <div className="container mx-auto px-4">
+          <h2 className="font-schoolbell text-3xl md:text-4xl text-center mb-12">Reviews</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {reviews.slice(0, 3).map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+
+          <div className="mt-12">
+            <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+              <h3 className="text-xl font-bold mb-4">Add Your Review</h3>
+              <form className="space-y-4">
+                <div>
+                  <label htmlFor="review-username" className="block text-sm font-medium mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    id="review-username"
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Your Name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Rating</label>
+                  <div className="flex text-gold">
+                    <span className="cursor-pointer">★</span>
+                    <span className="cursor-pointer">★</span>
+                    <span className="cursor-pointer">★</span>
+                    <span className="cursor-pointer">★</span>
+                    <span className="cursor-pointer">★</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="review-title" className="block text-sm font-medium mb-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="review-title"
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Review Title"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="review-content" className="block text-sm font-medium mb-1">
+                    Review
+                  </label>
+                  <textarea
+                    id="review-content"
+                    className="w-full px-3 py-2 border rounded-md"
+                    rows={4}
+                    placeholder="Write your review..."
+                    required
+                  ></textarea>
+                </div>
+
+                <Button className="w-full bg-gold hover:bg-amber-500 text-black">Submit Review</Button>
+              </form>
+            </div>
+          </div>
         </div>
       </section>
     </main>

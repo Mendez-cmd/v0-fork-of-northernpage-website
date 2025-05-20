@@ -107,15 +107,6 @@ async function checkTableExists(supabase, tableName) {
   }
 }
 
-// Add the missing exports
-export async function getProducts() {
-  return getAllProducts()
-}
-
-export async function getProduct(id: string) {
-  return getProductById(id)
-}
-
 export async function getFeaturedProducts() {
   const supabase = createClient()
 
@@ -229,44 +220,5 @@ export async function getProductById(id: string) {
     console.error(`Exception fetching product with ID ${id}:`, error instanceof Error ? error.message : String(error))
     // Return fallback product with matching ID
     return fallbackProducts.find((p) => p.id === id) || null
-  }
-}
-
-export async function getRelatedProducts(productId: string, category: string, limit = 4) {
-  const supabase = createClient()
-
-  try {
-    // First check if the products table exists
-    const tableExists = await checkTableExists(supabase, "products")
-
-    if (!tableExists) {
-      console.log("Products table does not exist, returning fallback data")
-      // Filter products by category and exclude the current product
-      return fallbackProducts.filter((p) => p.category === category && p.id !== productId).slice(0, limit)
-    }
-
-    // Get products in the same category but exclude the current product
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .eq("category", category)
-      .neq("id", productId)
-      .limit(limit)
-      .order("name")
-
-    if (error) {
-      console.error(`Error fetching related products for product ${productId}:`, error.message)
-      // Return fallback related products
-      return fallbackProducts.filter((p) => p.category === category && p.id !== productId).slice(0, limit)
-    }
-
-    return data || []
-  } catch (error) {
-    console.error(
-      `Exception fetching related products for product ${productId}:`,
-      error instanceof Error ? error.message : String(error),
-    )
-    // Return fallback related products
-    return fallbackProducts.filter((p) => p.category === category && p.id !== productId).slice(0, limit)
   }
 }

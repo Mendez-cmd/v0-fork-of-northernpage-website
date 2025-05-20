@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils"
-
 interface PlaceholderImageProps {
   name?: string
   width?: number
@@ -7,41 +5,55 @@ interface PlaceholderImageProps {
   className?: string
 }
 
-export function PlaceholderImage({ name = "Product", width = 300, height = 300, className }: PlaceholderImageProps) {
-  // Generate a random pastel color based on the name
-  const getColorFromName = (name: string) => {
+export function PlaceholderImage({
+  name = "Product",
+  width = 100,
+  height = 100,
+  className = "",
+}: PlaceholderImageProps) {
+  // Generate a consistent color based on the name
+  const getColor = (str: string) => {
     let hash = 0
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash)
     }
-
-    // Generate pastel color (lighter shade)
-    const h = hash % 360
-    return `hsl(${h}, 70%, 85%)`
+    const hue = hash % 360
+    return `hsl(${hue}, 70%, 80%)`
   }
 
-  const bgColor = getColorFromName(name)
-  const initials = name
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase()
+  const bgColor = getColor(name)
+  const textColor = "black"
+
+  // Get initials from name (up to 2 characters)
+  const getInitials = (str: string) => {
+    const words = str.split(" ")
+    if (words.length === 1) {
+      return str.substring(0, 2).toUpperCase()
+    }
+    return (words[0][0] + (words[1]?.[0] || "")).toUpperCase()
+  }
+
+  const initials = getInitials(name)
+
+  // Calculate font size safely
+  const calculateFontSize = () => {
+    const minDimension = Math.min(width || 100, height || 100)
+    return isNaN(minDimension) ? 24 : Math.max(minDimension / 3, 12)
+  }
 
   return (
     <div
-      className={cn("flex items-center justify-center text-center overflow-hidden", className)}
+      className={`flex items-center justify-center ${className}`}
       style={{
+        width: width || "100%",
+        height: height || "100%",
         backgroundColor: bgColor,
-        width: width ? `${width}px` : "100%",
-        height: height ? `${height}px` : "100%",
+        color: textColor,
+        fontSize: calculateFontSize(),
+        fontWeight: "bold",
       }}
     >
-      <div className="flex flex-col items-center justify-center p-4">
-        <span className="text-4xl font-bold text-gray-700 mb-2">{initials}</span>
-        <span className="text-sm text-gray-600 max-w-[80%] line-clamp-2">{name}</span>
-        <div className="mt-2 text-xs text-gray-500">Image coming soon</div>
-      </div>
+      {initials}
     </div>
   )
 }
