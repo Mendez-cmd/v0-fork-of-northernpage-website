@@ -41,15 +41,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
     <div className="container mx-auto px-4 py-6 md:py-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
         <div className="bg-white rounded-lg shadow-md p-4 md:p-6 order-1 md:order-1">
-          <div className="relative h-64 sm:h-80 md:h-96">
-            <Image
-              src={product.image_url || "/placeholder.svg"}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-contain"
-              priority
-            />
+          <div className="flex items-center justify-center h-64 sm:h-80 md:h-96">
+            <div className="relative w-full h-full max-w-[300px] max-h-[300px] mx-auto">
+              <Image
+                src={product.image_url || "/placeholder.svg"}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 300px, 300px"
+                className="object-contain"
+                priority
+              />
+            </div>
           </div>
         </div>
 

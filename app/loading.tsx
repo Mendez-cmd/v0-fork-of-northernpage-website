@@ -1,62 +1,81 @@
 import { FeaturedProductsSkeleton } from "@/components/featured-products-skeleton"
-import { Skeleton } from "@/components/ui/skeleton"
-import { ReviewCardSkeleton } from "@/components/review-card-skeleton"
 
-export default function HomeLoading() {
+export default function Loading() {
   return (
-    <div>
+    <div className="space-y-8">
       {/* Hero Section Skeleton */}
-      <div className="hero-section">
-        <div className="bg-gray-800 w-full h-full flex items-center justify-center">
-          <div className="text-center px-4 space-y-4">
-            <Skeleton className="h-12 w-64 mx-auto bg-gray-700" />
-            <Skeleton className="h-6 w-80 mx-auto bg-gray-700" />
-            <Skeleton className="h-10 w-40 mx-auto bg-gray-700 rounded-md mt-4" />
+      <div className="relative py-24 bg-gray-200 animate-pulse">
+        <div className="container mx-auto px-4 relative z-10 text-center">
+          <div className="flex justify-center mb-8">
+            <div className="h-20 w-60 bg-gray-300 rounded-md"></div>
+          </div>
+          <div className="h-10 w-3/4 mx-auto bg-gray-300 rounded-md mb-6"></div>
+          <div className="h-6 w-2/4 mx-auto bg-gray-300 rounded-md mb-8"></div>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <div className="h-12 w-32 bg-gray-300 rounded-md"></div>
+            <div className="h-12 w-32 bg-gray-300 rounded-md"></div>
           </div>
         </div>
       </div>
 
-      {/* Featured Products Skeleton */}
-      <FeaturedProductsSkeleton />
-
-      {/* Reviews Section Skeleton */}
-      <section className="py-12 bg-gray-100">
+      {/* Featured Products Section Skeleton */}
+      <div className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <Skeleton className="h-8 w-48 mx-auto bg-gray-300" />
-            <Skeleton className="h-4 w-64 mx-auto mt-3 bg-gray-300" />
+          <div className="flex flex-col items-center mb-12">
+            <div className="h-8 w-64 bg-gray-300 rounded-md mb-4"></div>
+            <div className="w-24 h-24 bg-gray-300 rounded-full mb-2"></div>
+            <div className="h-4 w-full max-w-2xl bg-gray-300 rounded-md"></div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array(3)
-              .fill(0)
-              .map((_, index) => (
-                <ReviewCardSkeleton key={index} />
-              ))}
+          <FeaturedProductsSkeleton count={3} />
+
+          <div className="text-center mt-12">
+            <div className="h-12 w-40 bg-gray-300 rounded-md mx-auto"></div>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Coming Soon Section Skeleton */}
-      <section className="py-12 bg-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <Skeleton className="h-10 w-64 mx-auto bg-gray-700" />
-            <Skeleton className="h-6 w-80 mx-auto mt-3 bg-gray-700" />
+      {/* About Section Skeleton */}
+      <div className="relative py-24 bg-gray-200 animate-pulse">
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="h-8 w-48 bg-gray-300 rounded-md mb-6 mx-auto"></div>
+            <div className="h-4 w-full bg-gray-300 rounded-md mb-2"></div>
+            <div className="h-4 w-full bg-gray-300 rounded-md mb-2"></div>
+            <div className="h-4 w-3/4 bg-gray-300 rounded-md mb-8 mx-auto"></div>
+            <div className="h-12 w-32 bg-gray-300 rounded-md mx-auto"></div>
           </div>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array(4)
-              .fill(0)
-              .map((_, index) => (
-                <div key={index} className="bg-gray-700 rounded-lg p-6 flex flex-col items-center">
-                  <Skeleton className="h-16 w-16 rounded-full bg-gray-600 mb-4" />
-                  <Skeleton className="h-5 w-32 bg-gray-600" />
+      {/* Testimonials Section Skeleton */}
+      <div className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="h-8 w-64 bg-gray-300 rounded-md mb-12 mx-auto"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-md p-6 animate-pulse">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-gray-300 rounded-full mr-4"></div>
+                  <div>
+                    <div className="h-4 w-24 bg-gray-300 rounded-md mb-2"></div>
+                    <div className="flex space-x-1">
+                      {[...Array(5)].map((_, j) => (
+                        <div key={j} className="w-4 h-4 bg-gray-300 rounded-full"></div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              ))}
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-gray-300 rounded-md"></div>
+                  <div className="h-4 w-full bg-gray-300 rounded-md"></div>
+                  <div className="h-4 w-3/4 bg-gray-300 rounded-md"></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </section>
+      </div>
     </div>
   )
 }

@@ -21,16 +21,18 @@ async function FeaturedProducts() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {featuredProducts.map((product) => (
-        <Card key={product.id} className="overflow-hidden transition-all hover:shadow-lg">
-          <div className="aspect-square relative">
+        <Card key={product.id} className="overflow-hidden transition-all hover:shadow-lg h-full flex flex-col">
+          <div className="aspect-square relative bg-gray-100 p-4 flex items-center justify-center">
             {product.image_url ? (
-              <img
-                src={product.image_url || "/placeholder.svg"}
-                alt={product.name}
-                className="object-cover w-full h-full"
-                width={400}
-                height={400}
-              />
+              <div className="relative w-full h-full max-w-[180px] max-h-[180px] mx-auto">
+                <Image
+                  src={product.image_url || "/placeholder.svg"}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 640px) 180px, (max-width: 768px) 180px, 180px"
+                  className="object-contain"
+                />
+              </div>
             ) : (
               <PlaceholderImage className="w-full h-full" />
             )}
@@ -40,10 +42,10 @@ async function FeaturedProducts() {
               </div>
             )}
           </div>
-          <CardContent className="p-6">
-            <h3 className="font-bold text-xl mb-2">{product.name}</h3>
-            <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-            <div className="flex justify-between items-center">
+          <CardContent className="p-6 flex-grow flex flex-col">
+            <h3 className="font-bold text-xl mb-2 line-clamp-2">{product.name}</h3>
+            <p className="text-gray-600 mb-4 line-clamp-2 flex-grow">{product.description}</p>
+            <div className="flex justify-between items-center mt-auto">
               <span className="text-lg font-bold">₱{product.price.toFixed(2)}</span>
               <Button asChild className="bg-gold hover:bg-amber-500 text-black">
                 <Link href={`/products/${product.id}`}>View Details</Link>

@@ -688,3 +688,29 @@
     padding-bottom: 0;
   }
 }
+
+/* Header auto-hide animation */
+.header-hidden {
+  transform: translateY(-100%);
+}
+
+.header-visible {
+  transform: translateY(0);
+}
+
+/* Gold color utility */
+.text-gold {
+  color: #ffd700;
+}
+
+.bg-gold {
+  background-color: #ffd700;
+}
+
+.hover\:text-gold:hover {
+  color: #ffd700;
+}
+
+.hover\:bg-gold:hover {
+  background-color: #ffd700;
+}

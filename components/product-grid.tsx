@@ -1,62 +1,74 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import type { Product } from "@/lib/products"
+import { formatCurrency } from "@/lib/utils"
 import { AddToCartButton } from "@/components/add-to-cart-button"
-import { ProductGridSkeleton } from "@/components/product-grid-skeleton"
 import { PlaceholderImage } from "@/components/placeholder-image"
+import { ProductGridSkeleton } from "./product-grid-skeleton"
 
 interface ProductGridProps {
-  products: Product[]
-  loading?: boolean
+  products: any[]
+  isLoading?: boolean
 }
 
-export function ProductGrid({ products, loading = false }: ProductGridProps) {
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  if (loading || !isClient) {
-    return <ProductGridSkeleton />
+export function ProductGrid({ products, isLoading = false }: ProductGridProps) {
+  if (isLoading) {
+    return <ProductGridSkeleton count={products.length || 6} />
   }
 
-  if (!products || products.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-xl font-semibold mb-2">No products found</h3>
-        <p className="text-gray-500">Try adjusting your filters or check back later.</p>
+        <h2 className="text-2xl font-semibold mb-4">No products found</h2>
+        <p className="text-gray-500">Try changing your filters or check back later for new products.</p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
       {products.map((product) => (
-        <div key={product.id} className="bg-custom-card rounded-lg p-4 md:p-6 flex flex-col h-full">
-          <Link href={`/products/${product.id}`} className="group">
-            <div className="relative aspect-square w-full mb-4 bg-gray-800 rounded-md overflow-hidden">
-              {product.image_url ? (
-                <Image
-                  src={product.image_url || "/placeholder.svg"}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <PlaceholderImage />
-              )}
+        <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col">
+          <div className="relative">
+            <Link href={`/products/${product.id}`}>
+              <div className="h-48 sm:h-56 md:h-64 bg-gray-100 relative">
+                {product.image_url ? (
+                  <div className="flex items-center justify-center h-full p-4">
+                    <div className="relative w-full h-full max-w-[180px] max-h-[180px] mx-auto">
+                      <Image
+                        src={product.image_url || "/placeholder.svg"}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 640px) 180px, (max-width: 768px) 180px, 180px"
+                        className="object-contain"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <PlaceholderImage name={product.name} width={180} height={180} className="w-full h-full" />
+                )}
+              </div>
+            </Link>
+            {product.is_bestseller && (
+              <span className="absolute top-2 left-2 bg-gold text-black text-xs font-bold px-2 py-1 rounded">
+                Best Seller
+              </span>
+            )}
+          </div>
+
+          <div className="p-4 flex-grow flex flex-col">
+            <Link href={`/products/${product.id}`}>
+              <h3 className="text-lg font-semibold mb-2 hover:text-gold transition-colors line-clamp-2">
+                {product.name}
+              </h3>
+            </Link>
+
+            <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">{product.description}</p>
+
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-lg font-bold">{formatCurrency(product.price)}</span>
+
+              <AddToCartButton product={product} />
             </div>
-            <h3 className="text-xl font-semibold text-gold mb-2">{product.name}</h3>
-            <p className="text-gray-300 mb-2 line-clamp-2">{product.description}</p>
-            <p className="text-white font-bold mb-4">${product.price.toFixed(2)}</p>
-          </Link>
-          <div className="mt-auto">
-            <AddToCartButton product={product} />
           </div>
         </div>
       ))}

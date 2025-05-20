@@ -1,5 +1,5 @@
 import { ProductDetailSkeleton } from "@/components/product-detail-skeleton"
 
-export default function ProductDetailLoading() {
+export default function Loading() {
   return <ProductDetailSkeleton />
 }
