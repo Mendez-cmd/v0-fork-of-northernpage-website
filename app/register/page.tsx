@@ -1,16 +1,16 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { useAuth } from "@/hooks/use-auth"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/hooks/use-auth"
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1)
@@ -30,10 +30,20 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
+  const [authLoaded, setAuthLoaded] = useState(false)
+  const [authClient, setAuthClient] = useState<any>(null)
 
-  const { signUp } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+  const supabase = createClient()
+  const auth = useAuth()
+
+  useEffect(() => {
+    if (auth) {
+      setAuthClient(auth)
+      setAuthLoaded(true)
+    }
+  }, [auth])
 
   // Password requirements
   const requirements = [
@@ -149,13 +159,55 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await signUp(formData.email, formData.password, {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
-        phone: formData.phone,
-        favorites: formData.favorites,
-        referral: formData.referral,
-      })
+      // Use either the auth client or direct Supabase client
+      let error = null
+
+      if (authLoaded && authClient) {
+        // Use the auth client if available
+        const result = await authClient.signUp(formData.email, formData.password, {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+          favorites: formData.favorites,
+          referral: formData.referral,
+        })
+        error = result.error
+      } else {
+        // Fallback to direct Supabase client
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              first_name: formData.firstName,
+              last_name: formData.lastName,
+              phone: formData.phone,
+              favorites: formData.favorites,
+              referral: formData.referral,
+            },
+            emailRedirectTo: `${siteUrl}/auth/confirm?type=email`,
+          },
+        })
+
+        error = signUpError
+
+        if (!error && data.user) {
+          // Create user profile in the database
+          const { error: profileError } = await supabase.from("users").insert({
+            id: data.user.id,
+            email: data.user.email,
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            phone: formData.phone,
+          })
+
+          if (profileError) {
+            error = profileError
+          }
+        }
+      }
 
       if (error) {
         toast({
@@ -170,11 +222,11 @@ export default function RegisterPage() {
         })
         router.push("/login")
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Registration failed",
-        description: "An unexpected error occurred. Please try again.",
+        description: error?.message || "An unexpected error occurred. Please try again.",
       })
     } finally {
       setIsLoading(false)
