@@ -22,7 +22,7 @@ interface CartContextType {
   itemCount: number
 }
 
-// Create context
+// Create context with undefined as default value
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
 // Provider component
