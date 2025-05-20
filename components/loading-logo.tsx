@@ -74,3 +74,6 @@ export function LoadingLogo({ size = "medium", showText = true, duration = 2000 
     </div>
   )
 }
+
+// Add default export
+export default LoadingLogo
