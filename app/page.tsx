@@ -6,6 +6,7 @@ import { getReviews } from "@/lib/reviews"
 import { DbSetupNotification } from "@/components/db-setup-notification"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlaceholderImage } from "@/components/placeholder-image"
+import Image from "next/image"
 
 // Make the page dynamic to avoid static rendering issues
 export const dynamic = "force-dynamic"
@@ -41,19 +42,43 @@ export default async function Home() {
       <DbSetupNotification />
 
       {/* Hero Section */}
-      <section className="bg-gold text-black py-16 md:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">Northern Chefs</h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            Authentic Filipino cuisine delivered to your doorstep. Experience the taste of home with our premium
-            handcrafted dishes.
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/background.png"
+            alt="Northern Chefs Background"
+            fill
+            className="object-cover opacity-70"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40"></div>
+        </div>
+        <div className="container mx-auto px-4 relative z-10 text-center">
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/images/Nothernchefslogo.png"
+              alt="Northern Chefs Logo"
+              width={300}
+              height={120}
+              className="h-auto"
+              priority
+            />
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">Authentic Filipino Cuisine</h1>
+          <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
+            Handcrafted with love and tradition. Taste the flavors of home with our premium homemade products.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button asChild size="lg" className="bg-black text-gold hover:bg-gray-800">
+            <Button asChild size="lg" className="bg-gold hover:bg-amber-600 text-black">
               <Link href="/products">Shop Now</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-black text-black hover:bg-black/10">
-              <Link href="/contact">Contact Us</Link>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm"
+            >
+              <Link href="/about">Learn More</Link>
             </Button>
           </div>
         </div>
@@ -62,7 +87,22 @@ export default async function Home() {
       {/* Featured Products Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Featured Products</h2>
+          <div className="flex flex-col items-center mb-12">
+            <h2 className="text-3xl font-bold text-center mb-4">Featured Products</h2>
+            <div className="w-24 h-24 mb-2">
+              <Image
+                src="/images/ChefGabrielslogo.png"
+                alt="Chef Gabriel's Logo"
+                width={96}
+                height={96}
+                className="w-full h-full"
+              />
+            </div>
+            <p className="text-gray-600 text-center max-w-2xl">
+              Chef Gabriel's premium handcrafted Filipino dishes, made with authentic recipes and the finest
+              ingredients.
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {featuredProducts.map((product) => (
               <Card key={product.id} className="overflow-hidden transition-all hover:shadow-lg">
@@ -106,29 +146,25 @@ export default async function Home() {
       </section>
 
       {/* About Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center gap-12">
-            <div className="md:w-1/2">
-              <h2 className="text-3xl font-bold mb-6">Our Story</h2>
-              <p className="text-gray-600 mb-4">
-                Northern Chefs was born from a passion for authentic Filipino cuisine and a desire to share the rich
-                culinary traditions of the Philippines with food lovers everywhere.
-              </p>
-              <p className="text-gray-600 mb-6">
-                Our team of skilled chefs combines traditional recipes with modern techniques to create dishes that are
-                both authentic and innovative. We source only the finest ingredients to ensure that every bite delivers
-                the true taste of Filipino hospitality.
-              </p>
-              <Button asChild className="bg-gold hover:bg-amber-500 text-black">
-                <Link href="/contact">Learn More</Link>
-              </Button>
-            </div>
-            <div className="md:w-1/2">
-              <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-                <PlaceholderImage className="w-full h-full" />
-              </div>
-            </div>
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <Image src="/images/background2.png" alt="Chef Gabriel's Products" fill className="object-cover opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40"></div>
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-6 text-white">Our Story</h2>
+            <p className="text-white/90 mb-8">
+              Northern Chefs started as a small family business with a passion for authentic Filipino cuisine. Today, we
+              continue to create homemade products using traditional recipes passed down through generations, bringing
+              the taste of Filipino heritage to your table.
+            </p>
+            <Link
+              href="/contact"
+              className="inline-block bg-gold hover:bg-amber-600 text-black font-bold py-3 px-8 rounded-md transition-colors"
+            >
+              Contact Us
+            </Link>
           </div>
         </div>
       </section>

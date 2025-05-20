@@ -66,8 +66,20 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col items-center space-y-4">
-            <Image src="/images/Logo1.png" alt="Chef Gabriel's Logo" width={150} height={150} className="h-auto" />
-            <Image src="/images/Logo2.png" alt="Northern Chefs Logo" width={200} height={80} className="h-auto" />
+            <Image
+              src="/images/ChefGabrielslogo.png"
+              alt="Chef Gabriel's Logo"
+              width={150}
+              height={150}
+              className="h-auto"
+            />
+            <Image
+              src="/images/Nothernchefslogo.png"
+              alt="Northern Chefs Logo"
+              width={200}
+              height={80}
+              className="h-auto"
+            />
           </div>
 
           <div className="space-y-6">

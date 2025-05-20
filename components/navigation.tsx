@@ -163,7 +163,13 @@ export function Navigation() {
 
         <div className="logo">
           <Link href="/">
-            <Image src="/images/Logo2.png" alt="Northern Chefs Logo" width={150} height={60} className="h-12 w-auto" />
+            <Image
+              src="/images/Nothernchefslogo.png"
+              alt="Northern Chefs Logo"
+              width={150}
+              height={60}
+              className="h-12 w-auto"
+            />
           </Link>
         </div>
 
