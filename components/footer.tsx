@@ -9,7 +9,7 @@ export function Footer() {
 
   return (
     <footer className="bg-black text-white">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex space-x-4">
@@ -31,15 +31,15 @@ export function Footer() {
             </div>
             <ul className="space-y-2">
               <li className="flex items-center space-x-2">
-                <Phone className="h-4 w-4 text-gold" />
+                <Phone className="h-4 w-4 text-gold flex-shrink-0" />
                 <span>0-123-4567-8900</span>
               </li>
               <li className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-gold" />
+                <MapPin className="h-4 w-4 text-gold flex-shrink-0" />
                 <span>BLK Try Lot Try South, Caloocan</span>
               </li>
               <li className="flex items-center space-x-2">
-                <Mail className="h-4 w-4 text-gold" />
+                <Mail className="h-4 w-4 text-gold flex-shrink-0" />
                 <span>info@northernchefs.com</span>
               </li>
             </ul>
@@ -65,19 +65,19 @@ export function Footer() {
             </form>
           </div>
 
-          <div className="flex flex-col items-center space-y-4">
+          <div className="flex flex-col items-center space-y-4 order-first md:order-none">
             <Image
               src="/images/ChefGabrielslogo.png"
               alt="Chef Gabriel's Logo"
-              width={150}
-              height={150}
+              width={120}
+              height={120}
               className="h-auto"
             />
             <Image
               src="/images/Nothernchefslogo.png"
               alt="Northern Chefs Logo"
-              width={200}
-              height={80}
+              width={160}
+              height={64}
               className="h-auto"
             />
           </div>
@@ -137,7 +137,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-4 border-t border-gray-800 text-center">
+        <div className="mt-8 md:mt-12 pt-4 border-t border-gray-800 text-center">
           <div className="mb-4">
             <h3 className="text-xl font-semibold mb-2">Newsletter</h3>
             <p className="text-gray-400 mb-4">Subscribe to get special offers and updates</p>

@@ -16,16 +16,19 @@ import {
 import { useCart } from "@/hooks/use-cart"
 import { createClient } from "@/lib/supabase/client"
 import { useToast } from "@/components/ui/use-toast"
+import { useMobile } from "@/hooks/use-mobile"
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userData, setUserData] = useState<any>(null)
+  const [scrolled, setScrolled] = useState(false)
   const pathname = usePathname()
   const { items } = useCart()
   const { toast } = useToast()
   const supabase = createClient()
+  const isMobile = useMobile()
 
   useEffect(() => {
     const checkUser = async () => {
@@ -56,8 +59,20 @@ export function Navigation() {
       }
     })
 
+    // Add scroll event listener
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true)
+      } else {
+        setScrolled(false)
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll)
+
     return () => {
       subscription.unsubscribe()
+      window.removeEventListener("scroll", handleScroll)
     }
   }, [supabase])
 
@@ -82,10 +97,17 @@ export function Navigation() {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
+    // Prevent scrolling when menu is open
+    if (!isMobileMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = "auto"
+    }
   }
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false)
+    document.body.style.overflow = "auto"
   }
 
   const isActive = (path: string) => {
@@ -121,8 +143,12 @@ export function Navigation() {
   }
 
   return (
-    <header className="bg-custom-dark text-white sticky top-0 z-50">
-      <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <header
+      className={`bg-custom-dark text-white sticky top-0 z-50 transition-all duration-300 ${
+        scrolled ? "shadow-md py-2" : "py-4"
+      }`}
+    >
+      <nav className="container mx-auto px-4 flex items-center justify-between">
         <div className="lg:hidden">
           <Button variant="ghost" size="icon" onClick={toggleMobileMenu} className="text-white hover:text-gold">
             <Menu className="h-6 w-6" />
@@ -161,19 +187,20 @@ export function Navigation() {
           </li>
         </ul>
 
-        <div className="logo">
+        <div className="logo flex-shrink-0">
           <Link href="/">
             <Image
               src="/images/Nothernchefslogo.png"
               alt="Northern Chefs Logo"
-              width={150}
-              height={60}
-              className="h-12 w-auto"
+              width={isMobile ? 120 : 150}
+              height={isMobile ? 48 : 60}
+              className={`h-auto transition-all duration-300 ${scrolled && !isMobile ? "w-32" : ""}`}
+              priority
             />
           </Link>
         </div>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 md:space-x-4">
           {!isLoading && (
             <>
               {isLoggedIn ? (
@@ -182,7 +209,7 @@ export function Navigation() {
                 </div>
               ) : (
                 <>
-                  <Link href="/login">
+                  <Link href="/login" className="hidden md:block">
                     <Button
                       variant="ghost"
                       className={`text-white hover:text-gold ${isActive("/login") ? "text-gold" : ""}`}
@@ -190,7 +217,7 @@ export function Navigation() {
                       Log-in
                     </Button>
                   </Link>
-                  <Link href="/register">
+                  <Link href="/register" className="hidden md:block">
                     <Button
                       variant="ghost"
                       className={`text-white hover:text-gold ${isActive("/register") ? "text-gold" : ""}`}
@@ -293,7 +320,7 @@ export function Navigation() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link href="/login">
+            <Link href="/login" className="md:hidden">
               <Button variant="ghost" size="icon" className="text-white hover:text-gold">
                 <User className="h-6 w-6" />
               </Button>
@@ -304,123 +331,233 @@ export function Navigation() {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-custom-dark bg-opacity-90 z-50 lg:hidden">
-          <div className="flex justify-end p-4">
+        <div className="fixed inset-0 bg-custom-dark bg-opacity-95 z-50 lg:hidden overflow-y-auto">
+          <div className="flex justify-between items-center p-4 border-b border-gray-800">
+            <Link href="/" onClick={closeMobileMenu}>
+              <Image
+                src="/images/Nothernchefslogo.png"
+                alt="Northern Chefs Logo"
+                width={120}
+                height={48}
+                className="h-10 w-auto"
+              />
+            </Link>
             <Button variant="ghost" size="icon" onClick={closeMobileMenu} className="text-white hover:text-gold">
               <X className="h-6 w-6" />
             </Button>
           </div>
 
-          <ul className="flex flex-col items-center space-y-6 mt-10">
+          <div className="p-4">
             {isLoggedIn && (
-              <li className="mb-4">
+              <div className="flex items-center mb-6 p-4 bg-gray-900 rounded-lg">
                 {getProfilePicture() ? (
                   <Image
                     src={getProfilePicture() || "/placeholder.svg"}
                     alt="Profile"
-                    width={80}
-                    height={80}
-                    className="rounded-full w-20 h-20 object-cover mb-2"
+                    width={60}
+                    height={60}
+                    className="rounded-full w-14 h-14 object-cover mr-4"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-full bg-gold flex items-center justify-center text-black mb-2">
+                  <div className="w-14 h-14 rounded-full bg-gold flex items-center justify-center text-black mr-4 text-xl font-bold">
                     {getUserDisplayName().charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div className="text-xl text-gold text-center">Hello, {getUserDisplayName()}</div>
-              </li>
+                <div>
+                  <div className="text-xl text-gold">Hello, {getUserDisplayName()}</div>
+                  <div className="text-sm text-gray-400 truncate max-w-[200px]">{userData?.email}</div>
+                </div>
+              </div>
             )}
 
-            <li>
-              <Link
-                href="/"
-                className={`text-xl hover:text-gold transition-colors ${isActive("/") ? "text-gold" : ""}`}
-                onClick={closeMobileMenu}
-              >
-                Home
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/products"
-                className={`text-xl hover:text-gold transition-colors ${isActive("/products") ? "text-gold" : ""}`}
-                onClick={closeMobileMenu}
-              >
-                Products
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/order"
-                className={`text-xl hover:text-gold transition-colors ${isActive("/order") ? "text-gold" : ""}`}
-                onClick={closeMobileMenu}
-              >
-                Order
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/contact"
-                className={`text-xl hover:text-gold transition-colors ${isActive("/contact") ? "text-gold" : ""}`}
-                onClick={closeMobileMenu}
-              >
-                Contact
-              </Link>
-            </li>
+            <nav className="space-y-6">
+              <div>
+                <h3 className="text-gray-400 uppercase text-sm font-semibold mb-3">Menu</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <Link
+                      href="/"
+                      className={`flex items-center text-lg hover:text-gold transition-colors ${
+                        isActive("/") ? "text-gold" : ""
+                      }`}
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">🏠</span>
+                      Home
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/products"
+                      className={`flex items-center text-lg hover:text-gold transition-colors ${
+                        isActive("/products") ? "text-gold" : ""
+                      }`}
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">🍲</span>
+                      Products
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/order"
+                      className={`flex items-center text-lg hover:text-gold transition-colors ${
+                        isActive("/order") ? "text-gold" : ""
+                      }`}
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">🛒</span>
+                      Order
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/contact"
+                      className={`flex items-center text-lg hover:text-gold transition-colors ${
+                        isActive("/contact") ? "text-gold" : ""
+                      }`}
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">📞</span>
+                      Contact
+                    </Link>
+                  </li>
+                </ul>
+              </div>
 
-            <div className="border-t border-gray-700 w-1/2 my-4"></div>
-
-            {!isLoading && (
-              <>
-                {isLoggedIn ? (
-                  <>
+              {isLoggedIn ? (
+                <div>
+                  <h3 className="text-gray-400 uppercase text-sm font-semibold mb-3">Account</h3>
+                  <ul className="space-y-4">
                     <li>
                       <Link
                         href="/account"
-                        className="text-xl hover:text-gold transition-colors"
+                        className="flex items-center text-lg hover:text-gold transition-colors"
                         onClick={closeMobileMenu}
                       >
-                        My Account
+                        <span className="mr-2">👤</span>
+                        Dashboard
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/account?tab=orders"
+                        className="flex items-center text-lg hover:text-gold transition-colors"
+                        onClick={closeMobileMenu}
+                      >
+                        <span className="mr-2">📦</span>
+                        My Orders
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/account?tab=wishlist"
+                        className="flex items-center text-lg hover:text-gold transition-colors"
+                        onClick={closeMobileMenu}
+                      >
+                        <span className="mr-2">❤️</span>
+                        Wishlist
                       </Link>
                     </li>
                     <li>
                       <Button
                         variant="ghost"
-                        className="text-xl text-white hover:text-gold"
+                        className="flex items-center text-lg text-red-500 hover:text-red-400 p-0"
                         onClick={() => {
                           handleLogout()
                           closeMobileMenu()
                         }}
                       >
+                        <span className="mr-2">🚪</span>
                         Logout
                       </Button>
                     </li>
-                  </>
-                ) : (
-                  <>
+                  </ul>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-gray-400 uppercase text-sm font-semibold mb-3">Account</h3>
+                  <ul className="space-y-4">
                     <li>
                       <Link
                         href="/login"
-                        className="text-xl hover:text-gold transition-colors"
+                        className="flex items-center text-lg hover:text-gold transition-colors"
                         onClick={closeMobileMenu}
                       >
+                        <span className="mr-2">🔑</span>
                         Log-in
                       </Link>
                     </li>
                     <li>
                       <Link
                         href="/register"
-                        className="text-xl hover:text-gold transition-colors"
+                        className="flex items-center text-lg hover:text-gold transition-colors"
                         onClick={closeMobileMenu}
                       >
+                        <span className="mr-2">✏️</span>
                         Sign-up
                       </Link>
                     </li>
-                  </>
-                )}
-              </>
-            )}
-          </ul>
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-gray-400 uppercase text-sm font-semibold mb-3">Categories</h3>
+                <ul className="space-y-4">
+                  <li>
+                    <Link
+                      href="/products?category=chicken-pastel"
+                      className="flex items-center text-lg hover:text-gold transition-colors"
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">🍗</span>
+                      Chicken Pastil
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/products?category=laing"
+                      className="flex items-center text-lg hover:text-gold transition-colors"
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">🌿</span>
+                      Laing
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/products?category=bangus"
+                      className="flex items-center text-lg hover:text-gold transition-colors"
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">🐟</span>
+                      Spanish Bangus
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/products?category=chili"
+                      className="flex items-center text-lg hover:text-gold transition-colors"
+                      onClick={closeMobileMenu}
+                    >
+                      <span className="mr-2">🌶️</span>
+                      Chili Garlic
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            </nav>
+
+            <div className="mt-8 pt-6 border-t border-gray-800">
+              <Link href="/cart" onClick={closeMobileMenu}>
+                <Button className="w-full bg-gold hover:bg-amber-500 text-black flex items-center justify-center">
+                  <ShoppingCart className="h-5 w-5 mr-2" />
+                  View Cart ({items.length} items)
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       )}
     </header>

@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import { getAllProducts, getProductsByCategory } from "@/lib/products"
 import { ProductGrid } from "@/components/product-grid"
 import { ProductFilters } from "@/components/product-filters"
+import { ProductGridSkeleton } from "@/components/product-grid-skeleton"
 
 interface ProductsPageProps {
   searchParams: {
@@ -11,7 +12,6 @@ interface ProductsPageProps {
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const { category } = searchParams
-  const products = category ? await getProductsByCategory(category) : await getAllProducts()
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -23,11 +23,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         </div>
 
         <div className="w-full lg:w-3/4">
-          <Suspense fallback={<div>Loading products...</div>}>
-            <ProductGrid products={products} />
+          <Suspense fallback={<ProductGridSkeleton />}>
+            <ProductList category={category} />
           </Suspense>
         </div>
       </div>
     </div>
   )
+}
+
+async function ProductList({ category }: { category?: string }) {
+  const products = category ? await getProductsByCategory(category) : await getAllProducts()
+  return <ProductGrid products={products} />
 }
