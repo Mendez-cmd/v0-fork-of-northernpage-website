@@ -1,23 +1,23 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { ThemeProvider } from "@/components/theme-provider"
 import { CartProvider } from "@/hooks/use-cart"
-import { AuthProvider } from "@/hooks/use-auth"
-import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
+import { PageTransition } from "@/components/page-transition"
+import { LoadingTransition } from "@/components/loading-transition"
+import type { ReactNode } from "react"
 
-export default function LayoutWithProviders({
-  children,
-}: {
+interface LayoutWithProvidersProps {
   children: ReactNode
-}) {
+}
+
+export default function LayoutWithProviders({ children }: LayoutWithProvidersProps) {
   return (
-    <AuthProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <CartProvider>
-        <Navigation />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <LoadingTransition>
+          <PageTransition>{children}</PageTransition>
+        </LoadingTransition>
       </CartProvider>
-    </AuthProvider>
+    </ThemeProvider>
   )
 }

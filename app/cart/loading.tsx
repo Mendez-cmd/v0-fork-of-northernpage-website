@@ -1,9 +1,9 @@
 import { LoadingLogo } from "@/components/loading-logo"
 
-export default function AuthErrorLoading() {
+export default function CartLoading() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <LoadingLogo size="lg" message="Processing..." />
+      <LoadingLogo size="lg" message="Loading your cart..." />
     </div>
   )
 }

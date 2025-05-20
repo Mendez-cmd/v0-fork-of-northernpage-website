@@ -7,35 +7,71 @@ import { DbSetupNotification } from "@/components/db-setup-notification"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlaceholderImage } from "@/components/placeholder-image"
 import Image from "next/image"
+import { Suspense } from "react"
+import LoadingLogo from "@/components/loading-logo"
 
 // Make the page dynamic to avoid static rendering issues
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-export default async function Home() {
-  // Add console log to debug
-  console.log("Fetching featured products for homepage")
+// Separate component for featured products to use with Suspense
+async function FeaturedProducts() {
+  const featuredProducts = await getFeaturedProducts()
 
-  // Fetch featured products with error handling
-  let featuredProducts = []
-  let reviews = []
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {featuredProducts.map((product) => (
+        <Card key={product.id} className="overflow-hidden transition-all hover:shadow-lg">
+          <div className="aspect-square relative">
+            {product.image_url ? (
+              <img
+                src={product.image_url || "/placeholder.svg"}
+                alt={product.name}
+                className="object-cover w-full h-full"
+                width={400}
+                height={400}
+              />
+            ) : (
+              <PlaceholderImage className="w-full h-full" />
+            )}
+            {product.is_bestseller && (
+              <div className="absolute top-2 right-2 bg-gold text-black text-xs font-bold px-2 py-1 rounded">
+                Bestseller
+              </div>
+            )}
+          </div>
+          <CardContent className="p-6">
+            <h3 className="font-bold text-xl mb-2">{product.name}</h3>
+            <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
+            <div className="flex justify-between items-center">
+              <span className="text-lg font-bold">₱{product.price.toFixed(2)}</span>
+              <Button asChild className="bg-gold hover:bg-amber-500 text-black">
+                <Link href={`/products/${product.id}`}>View Details</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  )
+}
 
-  try {
-    featuredProducts = await getFeaturedProducts()
-    console.log(`Successfully fetched ${featuredProducts.length} featured products`)
-  } catch (error) {
-    console.error("Error in Home component:", error)
-  }
+// Separate component for reviews to use with Suspense
+async function ReviewsSection() {
+  const reviews = await getReviews()
 
-  try {
-    console.log("Fetching reviews...")
-    reviews = await getReviews()
-    console.log(`Successfully fetched ${reviews.length} reviews`)
-  } catch (error) {
-    console.error("Error loading reviews:", error)
-    // Use empty array if there's an error
-  }
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {reviews.slice(0, 3).map((review) => (
+          <ReviewCard key={review.id} review={review} />
+        ))}
+      </div>
+    </>
+  )
+}
 
+export default function Home() {
   return (
     <main className="flex-1">
       {/* Database Setup Notification */}
@@ -103,40 +139,17 @@ export default async function Home() {
               ingredients.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden transition-all hover:shadow-lg">
-                <div className="aspect-square relative">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url || "/placeholder.svg"}
-                      alt={product.name}
-                      className="object-cover w-full h-full"
-                      width={400}
-                      height={400}
-                    />
-                  ) : (
-                    <PlaceholderImage className="w-full h-full" />
-                  )}
-                  {product.is_bestseller && (
-                    <div className="absolute top-2 right-2 bg-gold text-black text-xs font-bold px-2 py-1 rounded">
-                      Bestseller
-                    </div>
-                  )}
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="font-bold text-xl mb-2">{product.name}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold">₱{product.price.toFixed(2)}</span>
-                    <Button asChild className="bg-gold hover:bg-amber-500 text-black">
-                      <Link href={`/products/${product.id}`}>View Details</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center py-12">
+                <LoadingLogo size="md" showText={true} message="Loading featured products..." />
+              </div>
+            }
+          >
+            <FeaturedProducts />
+          </Suspense>
+
           <div className="text-center mt-12">
             <Button asChild size="lg" className="bg-gold hover:bg-amber-500 text-black">
               <Link href="/products">View All Products</Link>
@@ -287,13 +300,17 @@ export default async function Home() {
       {/* Reviews Section */}
       <section className="bg-gray-100 py-16">
         <div className="container mx-auto px-4">
-          <h2 className="font-schoolbell text-3xl md:text-4xl text-center mb-12">Reviews</h2>
+          <h2 className="text-3xl md:text-4xl text-center mb-12">Reviews</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {reviews.slice(0, 3).map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
-          </div>
+          <Suspense
+            fallback={
+              <div className="flex flex-col items-center justify-center py-12">
+                <LoadingLogo size="md" showText={true} message="Loading reviews..." />
+              </div>
+            }
+          >
+            <ReviewsSection />
+          </Suspense>
 
           <div className="mt-12">
             <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
