@@ -10,7 +10,9 @@ import { useToast } from "@/components/ui/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
-import { useAuth } from "@/hooks/use-auth"
+
+// Don't import useAuth at the top level
+// import { useAuth } from "@/hooks/use-auth"
 
 export default function RegisterForm() {
   const [step, setStep] = useState(1)
@@ -31,7 +33,6 @@ export default function RegisterForm() {
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
-  const { signUp } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
   const supabase = createClient()
@@ -150,73 +151,52 @@ export default function RegisterForm() {
     setIsLoading(true)
 
     try {
-      // Try to use the auth client's signUp method
-      try {
-        const { error } = await signUp(formData.email, formData.password, {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          phone: formData.phone,
-          favorites: formData.favorites,
-          referral: formData.referral,
-        })
+      // Use direct Supabase client for registration
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
 
-        if (error) {
-          toast({
-            variant: "destructive",
-            title: "Registration failed",
-            description: error.message,
-          })
-          setIsLoading(false)
-          return
-        }
-      } catch (authError) {
-        // Fallback to direct Supabase client if auth client fails
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
-
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: {
-              first_name: formData.firstName,
-              last_name: formData.lastName,
-              phone: formData.phone,
-              favorites: formData.favorites,
-              referral: formData.referral,
-            },
-            emailRedirectTo: `${siteUrl}/auth/confirm?type=email`,
-          },
-        })
-
-        if (signUpError) {
-          toast({
-            variant: "destructive",
-            title: "Registration failed",
-            description: signUpError.message,
-          })
-          setIsLoading(false)
-          return
-        }
-
-        if (data.user) {
-          // Create user profile in the database
-          const { error: profileError } = await supabase.from("users").insert({
-            id: data.user.id,
-            email: data.user.email,
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
             first_name: formData.firstName,
             last_name: formData.lastName,
             phone: formData.phone,
-          })
+            favorites: formData.favorites,
+            referral: formData.referral,
+          },
+          emailRedirectTo: `${siteUrl}/auth/confirm?type=email`,
+        },
+      })
 
-          if (profileError) {
-            toast({
-              variant: "destructive",
-              title: "Registration failed",
-              description: profileError.message,
-            })
-            setIsLoading(false)
-            return
-          }
+      if (signUpError) {
+        toast({
+          variant: "destructive",
+          title: "Registration failed",
+          description: signUpError.message,
+        })
+        setIsLoading(false)
+        return
+      }
+
+      if (data.user) {
+        // Create user profile in the database
+        const { error: profileError } = await supabase.from("users").insert({
+          id: data.user.id,
+          email: data.user.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          phone: formData.phone,
+        })
+
+        if (profileError) {
+          toast({
+            variant: "destructive",
+            title: "Registration failed",
+            description: profileError.message,
+          })
+          setIsLoading(false)
+          return
         }
       }
 
