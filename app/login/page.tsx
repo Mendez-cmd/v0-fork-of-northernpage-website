@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -11,8 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/use-toast"
-import { useAuth } from "@/hooks/use-auth"
-import { createClient } from "@/lib/supabase/client" // Fixed import path
+import { createClient } from "@/lib/supabase/client"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -20,10 +19,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [authClient, setAuthClient] = useState<any>(null)
 
-  const { signIn } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
+
+  // Initialize auth client on the client side only
+  useEffect(() => {
+    // Import the auth hook dynamically to prevent server-side usage
+    import("@/hooks/use-auth").then((module) => {
+      setAuthClient(module.useAuth)
+    })
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,29 +47,53 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const { error } = await signIn(email, password)
+      if (!authClient) {
+        // Fallback if auth client isn't loaded yet
+        const supabase = createClient()
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
 
-      if (error) {
-        // Check if the error is due to email not being confirmed
-        if (error.message.includes("Email not confirmed")) {
-          toast({
-            variant: "destructive",
-            title: "Email not confirmed",
-            description: "Please check your inbox and confirm your email before logging in.",
-          })
-        } else {
+        if (error) {
           toast({
             variant: "destructive",
             title: "Login failed",
             description: error.message,
           })
+        } else {
+          toast({
+            title: "Login successful",
+            description: "Welcome back!",
+          })
+          router.push("/")
         }
       } else {
-        toast({
-          title: "Login successful",
-          description: "Welcome back!",
-        })
-        router.push("/")
+        // Use the auth client if available
+        const { error } = await authClient.signIn(email, password)
+
+        if (error) {
+          // Check if the error is due to email not being confirmed
+          if (error.message.includes("Email not confirmed")) {
+            toast({
+              variant: "destructive",
+              title: "Email not confirmed",
+              description: "Please check your inbox and confirm your email before logging in.",
+            })
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Login failed",
+              description: error.message,
+            })
+          }
+        } else {
+          toast({
+            title: "Login successful",
+            description: "Welcome back!",
+          })
+          router.push("/")
+        }
       }
     } catch (error) {
       toast({
