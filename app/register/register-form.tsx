@@ -11,9 +11,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Eye, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
-// Don't import useAuth at the top level
-// import { useAuth } from "@/hooks/use-auth"
-
 export default function RegisterForm() {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
@@ -225,11 +222,29 @@ export default function RegisterForm() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <div className="hidden md:block md:w-1/2 bg-black relative">
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 bg-black bg-opacity-70">
-          <Image src="/images/Logo1.png" alt="Northern Chefs Logo" width={200} height={200} className="mb-6" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-12 bg-black bg-opacity-70 z-10">
+          <div className="relative w-64 h-64 mb-6">
+            <Image
+              src="/images/Nothernchefslogo.png"
+              alt="Northern Chefs Logo"
+              fill
+              priority
+              sizes="(max-width: 768px) 0vw, 256px"
+              style={{ objectFit: "contain" }}
+            />
+          </div>
           <h2 className="text-gold font-schoolbell text-3xl text-center">A Taste of Home in every Jar.</h2>
         </div>
-        <Image src="/images/background2.png" alt="Background" fill className="object-cover opacity-50" />
+        <div className="absolute inset-0">
+          <Image
+            src="/images/background2.png"
+            alt="Background"
+            fill
+            priority
+            sizes="(max-width: 768px) 0vw, 50vw"
+            style={{ objectFit: "cover", opacity: 0.5 }}
+          />
+        </div>
       </div>
 
       <div className="w-full md:w-1/2 p-8 md:p-12 flex items-center justify-center">
