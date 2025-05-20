@@ -1,6 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
+import type { ReactNode } from "react"
 
 // Define types
 export interface CartItem {
@@ -22,8 +23,8 @@ interface CartContextType {
   itemCount: number
 }
 
-// Create context with undefined as default value
-const CartContext = createContext<CartContextType | undefined>(undefined)
+// Create context
+const CartContext = createContext<CartContextType | null>(null)
 
 // Provider component
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -32,7 +33,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const storedCart = localStorage.getItem("cart")
+    const storedCart = typeof window !== "undefined" ? localStorage.getItem("cart") : null
     if (storedCart) {
       try {
         setItems(JSON.parse(storedCart))
@@ -46,7 +47,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // Save cart to localStorage when it changes
   useEffect(() => {
-    if (mounted) {
+    if (mounted && typeof window !== "undefined") {
       localStorage.setItem("cart", JSON.stringify(items))
     }
   }, [items, mounted])
@@ -95,28 +96,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Calculate total number of items
   const itemCount = items.reduce((count, item) => count + item.quantity, 0)
 
-  return (
-    <CartContext.Provider
-      value={{
-        items,
-        addItem,
-        removeItem,
-        updateItemQuantity,
-        clearCart,
-        getItem,
-        getSubtotal,
-        itemCount,
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  )
+  const value = {
+    items,
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    clearCart,
+    getItem,
+    getSubtotal,
+    itemCount,
+  }
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
 
 // Hook for using the cart context
 export function useCart() {
   const context = useContext(CartContext)
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useCart must be used within a CartProvider")
   }
   return context

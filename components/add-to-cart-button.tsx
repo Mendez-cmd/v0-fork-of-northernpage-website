@@ -60,5 +60,4 @@ export function AddToCartButton({
   )
 }
 
-// Add default export
 export default AddToCartButton

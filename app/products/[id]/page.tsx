@@ -1,7 +1,7 @@
 import { getProduct, getProducts } from "@/lib/products"
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import AddToCartButton from "@/components/add-to-cart-button"
+import { AddToCartButton } from "@/components/add-to-cart-button"
 import { FadeIn, SlideIn, SlideUp } from "@/components/transition-effects"
 
 export async function generateStaticParams() {
@@ -13,7 +13,7 @@ export async function generateStaticParams() {
 }
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(Number.parseInt(params.id))
+  const product = await getProduct(params.id)
 
   if (!product) {
     notFound()
@@ -26,7 +26,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
           <FadeIn>
             <div className="bg-white rounded-lg overflow-hidden shadow-lg">
               <Image
-                src={product.image || "/images/comingsoon.png"}
+                src={product.image_url || "/images/comingsoon.png"}
                 alt={product.name}
                 width={600}
                 height={600}
@@ -64,7 +64,12 @@ export default async function ProductPage({ params }: { params: { id: string } }
           </SlideUp>
 
           <SlideUp delay={0.4}>
-            <AddToCartButton product={product} />
+            <AddToCartButton
+              productId={product.id}
+              name={product.name}
+              price={product.price}
+              image={product.image_url}
+            />
           </SlideUp>
         </div>
       </div>
