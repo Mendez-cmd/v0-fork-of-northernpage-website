@@ -5,6 +5,7 @@ import { getProductById } from "@/lib/products"
 import { getReviewsByProductId } from "@/lib/reviews"
 import { formatCurrency } from "@/lib/utils"
 import { AddToCartButton } from "@/components/add-to-cart-button"
+import { WishlistButton } from "@/components/wishlist-button"
 import { ReviewCard } from "@/components/review-card"
 import { Button } from "@/components/ui/button"
 import { Star } from "lucide-react"
@@ -40,7 +41,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <div className="container mx-auto px-4 py-6 md:py-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12">
-        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 order-1 md:order-1">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 order-1 md:order-1 relative">
+          <div className="absolute top-6 right-6 z-10">
+            <WishlistButton productId={product.id} />
+          </div>
           <div className="flex items-center justify-center h-64 sm:h-80 md:h-96">
             <div className="relative w-full h-full max-w-[300px] max-h-[300px] mx-auto">
               <Image
@@ -71,7 +75,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <p>{product.description}</p>
           </div>
 
-          <AddToCartButton product={product} showQuantity className="w-full md:w-auto mb-4 md:mb-6" />
+          <div className="flex flex-col sm:flex-row gap-3 mb-4 md:mb-6">
+            <AddToCartButton product={product} showQuantity className="w-full sm:w-auto" />
+            <WishlistButton productId={product.id} variant="button" className="w-full sm:w-auto" />
+          </div>
 
           <div className="border-t border-gray-200 pt-4 md:pt-6">
             <h3 className="text-lg font-semibold mb-2">Product Details</h3>

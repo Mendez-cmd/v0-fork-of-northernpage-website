@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { PageTransition } from "@/components/page-transition"
+import { LiveChat } from "@/components/live-chat"
+import { AuthProvider } from "@/hooks/use-auth"
 
 interface LayoutWithProvidersProps {
   children: React.ReactNode
@@ -15,17 +17,20 @@ interface LayoutWithProvidersProps {
 export default function LayoutWithProviders({ children }: LayoutWithProvidersProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <CartProvider>
-        <Navigation />
-        <div className="min-h-screen pt-16">
-          {/* Add padding top to account for fixed header */}
-          <PageTransition>
-            <main>{children}</main>
-          </PageTransition>
-        </div>
-        <Footer />
-        <Toaster />
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <Navigation />
+          <div className="min-h-screen pt-16">
+            {/* Add padding top to account for fixed header */}
+            <PageTransition>
+              <main>{children}</main>
+            </PageTransition>
+          </div>
+          <Footer />
+          <Toaster />
+          <LiveChat />
+        </CartProvider>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

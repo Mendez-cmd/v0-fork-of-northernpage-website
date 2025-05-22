@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
+import { ImageUpload } from "./image-upload"
 
 interface ProductFormProps {
   product?: {
@@ -106,7 +107,7 @@ export function ProductForm({ product, categories = [] }: ProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow">
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div>
           <Label htmlFor="name">Product Name</Label>
           <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required className="mt-1" />
@@ -180,33 +181,22 @@ export function ProductForm({ product, categories = [] }: ProductFormProps) {
           </div>
         </div>
 
-        <div>
-          <Label htmlFor="image_url">Image URL</Label>
-          <Input
-            id="image_url"
-            value={image_url}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://example.com/image.jpg"
-            className="mt-1"
-          />
-          {image_url && (
-            <div className="mt-2">
-              <p className="text-sm text-gray-500 mb-1">Preview:</p>
-              <img
-                src={image_url || "/placeholder.svg"}
-                alt="Product preview"
-                className="w-32 h-32 object-cover rounded border"
-                onError={(e) => {
-                  e.currentTarget.src = "/placeholder.svg?height=128&width=128"
-                }}
-              />
-            </div>
-          )}
-        </div>
+        {/* New Image Upload Component */}
+        <ImageUpload
+          value={image_url}
+          onChange={setImageUrl}
+          onError={(error) => {
+            toast({
+              title: "Upload Error",
+              description: error,
+              variant: "destructive",
+            })
+          }}
+        />
       </div>
 
       <div className="flex gap-4">
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || !image_url}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {product?.id ? "Update Product" : "Create Product"}
         </Button>

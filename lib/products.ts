@@ -222,3 +222,178 @@ export async function getProductById(id: string) {
     return fallbackProducts.find((p) => p.id === id) || null
   }
 }
+
+interface FilterOptions {
+  category?: string
+  minPrice?: number
+  maxPrice?: number
+  inStock?: boolean
+  sort?: string
+}
+
+export async function getFilteredProducts(options: FilterOptions) {
+  const { category, minPrice, maxPrice, inStock, sort } = options
+  const supabase = createClient()
+
+  try {
+    // First check if the products table exists
+    const tableExists = await checkTableExists(supabase, "products")
+
+    if (!tableExists) {
+      console.log("Products table does not exist, returning filtered fallback data")
+      let filtered = [...fallbackProducts]
+
+      // Apply category filter
+      if (category) {
+        filtered = filtered.filter((p) => p.category === category)
+      }
+
+      // Apply price filter
+      if (minPrice !== undefined) {
+        filtered = filtered.filter((p) => p.price >= minPrice)
+      }
+
+      if (maxPrice !== undefined) {
+        filtered = filtered.filter((p) => p.price <= maxPrice)
+      }
+
+      // Apply stock filter
+      if (inStock) {
+        filtered = filtered.filter((p) => p.stock_quantity > 0)
+      }
+
+      // Apply sorting
+      if (sort) {
+        switch (sort) {
+          case "name-asc":
+            filtered.sort((a, b) => a.name.localeCompare(b.name))
+            break
+          case "name-desc":
+            filtered.sort((a, b) => b.name.localeCompare(a.name))
+            break
+          case "price-asc":
+            filtered.sort((a, b) => a.price - b.price)
+            break
+          case "price-desc":
+            filtered.sort((a, b) => b.price - a.price)
+            break
+          case "newest":
+            filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            break
+        }
+      }
+
+      return filtered
+    }
+
+    // Start building the query
+    let query = supabase.from("products").select("*")
+
+    // Apply category filter
+    if (category) {
+      query = query.eq("category", category)
+    }
+
+    // Apply price filter
+    if (minPrice !== undefined) {
+      query = query.gte("price", minPrice)
+    }
+
+    if (maxPrice !== undefined) {
+      query = query.lte("price", maxPrice)
+    }
+
+    // Apply stock filter
+    if (inStock) {
+      query = query.gt("stock_quantity", 0)
+    }
+
+    // Apply sorting
+    if (sort) {
+      switch (sort) {
+        case "name-asc":
+          query = query.order("name", { ascending: true })
+          break
+        case "name-desc":
+          query = query.order("name", { ascending: false })
+          break
+        case "price-asc":
+          query = query.order("price", { ascending: true })
+          break
+        case "price-desc":
+          query = query.order("price", { ascending: false })
+          break
+        case "newest":
+          query = query.order("created_at", { ascending: false })
+          break
+        default:
+          query = query.order("name", { ascending: true })
+      }
+    } else {
+      // Default sorting
+      query = query.order("name", { ascending: true })
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error("Error fetching filtered products:", error.message)
+      // Return filtered fallback data if there's an error
+      return getFilteredFallbackProducts(options)
+    }
+
+    return data || []
+  } catch (error) {
+    console.error("Exception fetching filtered products:", error instanceof Error ? error.message : String(error))
+    // Return filtered fallback data if there's an exception
+    return getFilteredFallbackProducts(options)
+  }
+}
+
+// Helper function to filter and sort fallback products
+function getFilteredFallbackProducts(options: FilterOptions) {
+  const { category, minPrice, maxPrice, inStock, sort } = options
+  let filtered = [...fallbackProducts]
+
+  // Apply category filter
+  if (category) {
+    filtered = filtered.filter((p) => p.category === category)
+  }
+
+  // Apply price filter
+  if (minPrice !== undefined) {
+    filtered = filtered.filter((p) => p.price >= minPrice)
+  }
+
+  if (maxPrice !== undefined) {
+    filtered = filtered.filter((p) => p.price <= maxPrice)
+  }
+
+  // Apply stock filter
+  if (inStock) {
+    filtered = filtered.filter((p) => p.stock_quantity > 0)
+  }
+
+  // Apply sorting
+  if (sort) {
+    switch (sort) {
+      case "name-asc":
+        filtered.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      case "name-desc":
+        filtered.sort((a, b) => b.name.localeCompare(a.name))
+        break
+      case "price-asc":
+        filtered.sort((a, b) => a.price - b.price)
+        break
+      case "price-desc":
+        filtered.sort((a, b) => b.price - a.price)
+        break
+      case "newest":
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        break
+    }
+  }
+
+  return filtered
+}
