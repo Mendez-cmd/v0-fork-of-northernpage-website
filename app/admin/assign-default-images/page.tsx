@@ -8,16 +8,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { createClient } from "@/lib/supabase/client"
 import { needsDefaultImage, getFallbackImage, PRODUCT_CATEGORIES } from "@/lib/default-images"
-import { AlertCircle, CheckCircle, ImageIcon, Scan, Wand2 } from "lucide-react"
+import { AlertCircle, CheckCircle, ImageIcon, Scan, Wand2, Loader2 } from "lucide-react"
 
 interface Product {
   id: string
   name: string
-  category: string
+  category: string | null
   image_url: string | null
 }
 
 export default function AssignDefaultImagesPage() {
+  const [mounted, setMounted] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [productsNeedingImages, setProductsNeedingImages] = useState<Product[]>([])
   const [isScanning, setIsScanning] = useState(false)
@@ -29,6 +30,11 @@ export default function AssignDefaultImagesPage() {
     errors: string[]
   } | null>(null)
 
+  // Prevent hydration issues
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const scanProducts = async () => {
     setIsScanning(true)
     setResults(null)
@@ -39,8 +45,19 @@ export default function AssignDefaultImagesPage() {
 
       if (error) throw error
 
-      setProducts(data || [])
-      const needingImages = (data || []).filter(needsDefaultImage)
+      const products = data || []
+      setProducts(products)
+
+      // Filter products that need images with proper null checks
+      const needingImages = products.filter((product) => {
+        try {
+          return needsDefaultImage(product)
+        } catch (error) {
+          console.error("Error checking product:", product, error)
+          return false
+        }
+      })
+
       setProductsNeedingImages(needingImages)
     } catch (error) {
       console.error("Error scanning products:", error)
@@ -76,7 +93,8 @@ export default function AssignDefaultImagesPage() {
         results.success++
       } catch (error) {
         results.failed++
-        results.errors.push(`Failed to update ${product.name}: ${error.message}`)
+        const errorMessage = error instanceof Error ? error.message : "Unknown error"
+        results.errors.push(`Failed to update ${product.name}: ${errorMessage}`)
         console.error(`Error updating product ${product.id}:`, error)
       }
 
@@ -91,8 +109,24 @@ export default function AssignDefaultImagesPage() {
   }
 
   useEffect(() => {
-    scanProducts()
-  }, [])
+    if (mounted) {
+      scanProducts()
+    }
+  }, [mounted])
+
+  // Show loading state until mounted
+  if (!mounted) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -227,6 +261,9 @@ export default function AssignDefaultImagesPage() {
                           src={getFallbackImage(product.category) || "/placeholder.svg"}
                           alt="Preview"
                           className="w-8 h-8 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.src = "/placeholder.svg?height=32&width=32&text=No+Image"
+                          }}
                         />
                       </div>
                     </div>
@@ -251,6 +288,9 @@ export default function AssignDefaultImagesPage() {
                       src={getFallbackImage(category.value) || "/placeholder.svg"}
                       alt={category.label}
                       className="w-16 h-16 object-contain"
+                      onError={(e) => {
+                        e.currentTarget.src = "/placeholder.svg?height=64&width=64&text=No+Image"
+                      }}
                     />
                   </div>
                   <div className="text-sm font-medium">{category.label}</div>
