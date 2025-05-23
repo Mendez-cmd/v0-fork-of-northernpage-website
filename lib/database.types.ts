@@ -204,6 +204,47 @@ export interface Database {
           created_at?: string
         }
       }
+      reviews: {
+        Row: {
+          id: string
+          product_id: string
+          user_id: string
+          rating: number
+          title: string
+          content: string | null
+          images: string[] | null
+          verified_purchase: boolean
+          helpful_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          user_id: string
+          rating: number
+          title: string
+          content?: string | null
+          images?: string[] | null
+          verified_purchase?: boolean
+          helpful_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          user_id?: string
+          rating?: number
+          title?: string
+          content?: string | null
+          images?: string[] | null
+          verified_purchase?: boolean
+          helpful_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }

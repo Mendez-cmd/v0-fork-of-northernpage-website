@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getFeaturedProducts } from "@/lib/products"
-import { ReviewCard } from "@/components/review-card"
 import { getReviews } from "@/lib/reviews"
 import { DbSetupNotification } from "@/components/db-setup-notification"
 import { Card, CardContent } from "@/components/ui/card"
@@ -9,6 +8,8 @@ import { PlaceholderImage } from "@/components/placeholder-image"
 import Image from "next/image"
 import { Suspense } from "react"
 import LoadingLogo from "@/components/loading-logo"
+import { ReviewCard } from "@/components/review-card"
+import { HomeReviewForm } from "@/components/home-review-form"
 
 // Make the page dynamic to avoid static rendering issues
 export const dynamic = "force-dynamic"
@@ -60,17 +61,51 @@ async function FeaturedProducts() {
 
 // Separate component for reviews to use with Suspense
 async function ReviewsSection() {
-  const reviews = await getReviews()
+  try {
+    // Add a small delay to prevent overwhelming the database
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
-  return (
-    <>
+    const reviews = await getReviews()
+
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-500">No reviews available at this time.</p>
+        </div>
+      )
+    }
+
+    return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {reviews.slice(0, 3).map((review) => (
           <ReviewCard key={review.id} review={review} />
         ))}
       </div>
-    </>
-  )
+    )
+  } catch (error) {
+    console.error("Error rendering reviews section:", error)
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Reviews are temporarily unavailable. Please check back later.</p>
+      </div>
+    )
+  }
+}
+
+// Separate component for review form to use with Suspense
+async function ReviewFormSection() {
+  try {
+    const products = await getFeaturedProducts()
+    return <HomeReviewForm products={products} />
+  } catch (error) {
+    console.error("Error loading products for review form:", error)
+    return (
+      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h3 className="text-xl font-bold mb-4">Add Your Review</h3>
+        <p className="text-gray-600">Unable to load products at the moment. Please try again later.</p>
+      </div>
+    )
+  }
 }
 
 export default function Home() {
@@ -315,62 +350,15 @@ export default function Home() {
           </Suspense>
 
           <div className="mt-12">
-            <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold mb-4">Add Your Review</h3>
-              <form className="space-y-4">
-                <div>
-                  <label htmlFor="review-username" className="block text-sm font-medium mb-1">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    id="review-username"
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder="Your Name"
-                    required
-                  />
+            <Suspense
+              fallback={
+                <div className="flex flex-col items-center justify-center py-8">
+                  <LoadingLogo size="sm" showText={true} message="Loading review form..." />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Rating</label>
-                  <div className="flex text-gold">
-                    <span className="cursor-pointer">★</span>
-                    <span className="cursor-pointer">★</span>
-                    <span className="cursor-pointer">★</span>
-                    <span className="cursor-pointer">★</span>
-                    <span className="cursor-pointer">★</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="review-title" className="block text-sm font-medium mb-1">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    id="review-title"
-                    className="w-full px-3 py-2 border rounded-md"
-                    placeholder="Review Title"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="review-content" className="block text-sm font-medium mb-1">
-                    Review
-                  </label>
-                  <textarea
-                    id="review-content"
-                    className="w-full px-3 py-2 border rounded-md"
-                    rows={4}
-                    placeholder="Write your review..."
-                    required
-                  ></textarea>
-                </div>
-
-                <Button className="w-full bg-gold hover:bg-amber-500 text-black">Submit Review</Button>
-              </form>
-            </div>
+              }
+            >
+              <ReviewFormSection />
+            </Suspense>
           </div>
         </div>
       </section>

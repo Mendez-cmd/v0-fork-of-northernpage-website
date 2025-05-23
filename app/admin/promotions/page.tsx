@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PromotionsList } from "@/components/admin/promotions/promotions-list"
-import { Plus } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { formatCurrency, formatDate } from "@/lib/utils"
+import { Plus, Edit, Trash } from "lucide-react"
 
 export default async function PromotionsPage() {
   const supabase = createClient()
@@ -12,38 +12,41 @@ export default async function PromotionsPage() {
   // Check if promotions table exists
   let tableExists = false
   try {
-    const { data, error } = await supabase
+    const { data: tableData, error: tableError } = await supabase
       .from("information_schema.tables")
       .select("table_name")
       .eq("table_schema", "public")
       .eq("table_name", "promotions")
       .single()
 
-    if (!error && data) {
+    if (!tableError && tableData) {
       tableExists = true
     }
   } catch (error) {
     console.error("Error checking if promotions table exists:", error)
   }
 
-  // Get active promotions count
-  let activePromotionsCount = 0
+  // Fetch promotions if table exists
+  let promotions: any[] = []
   if (tableExists) {
     try {
-      const { count, error } = await supabase.from("promotions").select("*", { count: "exact" }).eq("is_active", true)
+      const { data, error } = await supabase.from("promotions").select("*").order("created_at", { ascending: false })
 
       if (!error) {
-        activePromotionsCount = count || 0
+        promotions = data || []
       }
     } catch (error) {
-      console.error("Error getting active promotions count:", error)
+      console.error("Error fetching promotions:", error)
     }
   }
 
+  // Get current date for checking active status
+  const now = new Date().toISOString()
+
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Promotions</h2>
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Promotions Management</h1>
         <Link href="/admin/promotions/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
@@ -53,57 +56,117 @@ export default async function PromotionsPage() {
       </div>
 
       {!tableExists ? (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                Promotions table does not exist. Please set up the database first.
+              </p>
+              <p className="mt-2">
+                <Link href="/admin/setup" className="text-yellow-700 font-medium underline">
+                  Go to Database Setup
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : promotions.length === 0 ? (
+        <div className="text-center py-12 bg-white rounded-lg shadow">
+          <h3 className="mt-2 text-lg font-medium text-gray-900">No promotions found</h3>
+          <p className="mt-1 text-sm text-gray-500">Get started by creating a new promotion.</p>
+          <div className="mt-6">
+            <Link href="/admin/promotions/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add New Promotion
+              </Button>
+            </Link>
+          </div>
+        </div>
+      ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Promotions Table Not Found</CardTitle>
-            <CardDescription>
-              The promotions table does not exist in your database. Please run the database setup first.
-            </CardDescription>
+            <CardTitle>Active Promotions</CardTitle>
           </CardHeader>
           <CardContent>
-            <Link href="/admin/setup">
-              <Button variant="outline">Go to Database Setup</Button>
-            </Link>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Name</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Code</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Discount</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Valid Period</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-500">Usage</th>
+                    <th className="text-right py-3 px-4 font-medium text-gray-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {promotions.map((promo) => {
+                    const isActive =
+                      promo.is_active &&
+                      new Date(promo.starts_at) <= new Date(now) &&
+                      new Date(promo.ends_at) >= new Date(now)
+
+                    return (
+                      <tr key={promo.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4 font-medium">{promo.name}</td>
+                        <td className="py-3 px-4">
+                          <code className="bg-gray-100 px-2 py-1 rounded">{promo.code}</code>
+                        </td>
+                        <td className="py-3 px-4">
+                          {promo.discount_type === "percentage"
+                            ? `${promo.discount_value}%`
+                            : formatCurrency(promo.discount_value)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="text-sm">
+                            <div>{formatDate(promo.starts_at)}</div>
+                            <div>to</div>
+                            <div>{formatDate(promo.ends_at)}</div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            className={
+                              isActive
+                                ? "bg-green-100 text-green-800"
+                                : new Date(promo.starts_at) > new Date(now)
+                                  ? "bg-blue-100 text-blue-800"
+                                  : "bg-gray-100 text-gray-800"
+                            }
+                          >
+                            {isActive ? "Active" : new Date(promo.starts_at) > new Date(now) ? "Upcoming" : "Expired"}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          {promo.usage_limit
+                            ? `${promo.usage_count || 0} / ${promo.usage_limit}`
+                            : `${promo.usage_count || 0} / Unlimited`}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Link href={`/admin/promotions/${promo.id}`}>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            <form action={`/api/admin/promotions/${promo.id}/delete`} method="POST">
+                              <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
-      ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Promotions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activePromotionsCount}</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Tabs defaultValue="all" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="all">All Promotions</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
-              <TabsTrigger value="expired">Expired</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all" className="space-y-4">
-              <PromotionsList filter="all" />
-            </TabsContent>
-
-            <TabsContent value="active" className="space-y-4">
-              <PromotionsList filter="active" />
-            </TabsContent>
-
-            <TabsContent value="scheduled" className="space-y-4">
-              <PromotionsList filter="scheduled" />
-            </TabsContent>
-
-            <TabsContent value="expired" className="space-y-4">
-              <PromotionsList filter="expired" />
-            </TabsContent>
-          </Tabs>
-        </>
       )}
     </div>
   )

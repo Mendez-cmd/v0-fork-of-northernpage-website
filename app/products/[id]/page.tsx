@@ -2,13 +2,14 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 import { getProductById } from "@/lib/products"
-import { getReviewsByProductId } from "@/lib/reviews"
+import { getReviewsByProductId, getProductRatingStats } from "@/lib/reviews"
 import { formatCurrency } from "@/lib/utils"
 import { AddToCartButton } from "@/components/add-to-cart-button"
 import { WishlistButton } from "@/components/wishlist-button"
-import { ReviewCard } from "@/components/review-card"
-import { Button } from "@/components/ui/button"
+import { ReviewItem } from "@/components/review-item"
+import { ReviewForm } from "@/components/review-form"
 import { Star } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface ProductPageProps {
   params: {
@@ -24,10 +25,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const reviews = await getReviewsByProductId(params.id)
-
-  // Calculate average rating
-  const averageRating =
-    reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0
+  const ratingStats = await getProductRatingStats(params.id)
 
   // Generate stars based on rating
   const renderStars = (rating: number) => {
@@ -36,6 +34,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
       stars.push(<Star key={i} className={`h-5 w-5 ${i <= rating ? "fill-gold text-gold" : "text-gray-300"}`} />)
     }
     return stars
+  }
+
+  // Generate rating bars
+  const renderRatingBars = () => {
+    return [5, 4, 3, 2, 1].map((star) => {
+      const count = ratingStats.ratingDistribution[star as keyof typeof ratingStats.ratingDistribution] || 0
+      const percentage = ratingStats.totalReviews > 0 ? (count / ratingStats.totalReviews) * 100 : 0
+
+      return (
+        <div key={star} className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-1 w-16">
+            <span>{star}</span>
+            <Star className="h-4 w-4 fill-gold text-gold" />
+          </div>
+          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-gold rounded-full" style={{ width: `${percentage}%` }}></div>
+          </div>
+          <div className="w-10 text-right text-sm text-gray-500">{count}</div>
+        </div>
+      )
+    })
   }
 
   return (
@@ -63,9 +82,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <h1 className="text-2xl md:text-3xl font-bold mb-2">{product.name}</h1>
 
           <div className="flex items-center mb-4">
-            <div className="flex mr-2">{renderStars(averageRating)}</div>
+            <div className="flex mr-2">{renderStars(ratingStats.averageRating)}</div>
             <span className="text-gray-500">
-              {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+              {ratingStats.totalReviews} {ratingStats.totalReviews === 1 ? "review" : "reviews"}
             </span>
           </div>
 
@@ -97,70 +116,35 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">Customer Reviews</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
-          <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-            <h3 className="text-lg md:text-xl font-semibold mb-4">Write a Review</h3>
-            <form className="space-y-4">
-              <div>
-                <label htmlFor="rating" className="block text-sm font-medium mb-1">
-                  Rating
-                </label>
-                <div className="flex text-gray-300">
-                  <Star className="h-6 w-6 cursor-pointer hover:text-gold" />
-                  <Star className="h-6 w-6 cursor-pointer hover:text-gold" />
-                  <Star className="h-6 w-6 cursor-pointer hover:text-gold" />
-                  <Star className="h-6 w-6 cursor-pointer hover:text-gold" />
-                  <Star className="h-6 w-6 cursor-pointer hover:text-gold" />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="Give your review a title"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="content" className="block text-sm font-medium mb-1">
-                  Review
-                </label>
-                <textarea
-                  id="content"
-                  rows={4}
-                  className="w-full px-3 py-2 border rounded-md"
-                  placeholder="Write your review here"
-                ></textarea>
-              </div>
-
-              <Button className="w-full sm:w-auto bg-gold hover:bg-amber-500 text-black">Submit Review</Button>
-            </form>
+          <div>
+            <ReviewForm productId={params.id} onReviewSubmitted={() => {}} />
           </div>
 
           <div>
-            <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-4 md:mb-6">
-              <h3 className="text-lg md:text-xl font-semibold mb-4">Rating Summary</h3>
-              <div className="flex items-center mb-2">
-                <div className="flex text-gold mr-2">{renderStars(averageRating)}</div>
-                <span>{averageRating.toFixed(1)} out of 5</span>
-              </div>
-              <p className="text-gray-500">
-                Based on {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
-              </p>
-            </div>
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg md:text-xl font-semibold mb-4">Rating Summary</h3>
+                <div className="flex items-center mb-4">
+                  <div className="flex text-gold mr-2">{renderStars(ratingStats.averageRating)}</div>
+                  <span className="font-medium">{ratingStats.averageRating.toFixed(1)} out of 5</span>
+                </div>
+
+                <p className="text-gray-500 mb-4">
+                  Based on {ratingStats.totalReviews} {ratingStats.totalReviews === 1 ? "review" : "reviews"}
+                </p>
+
+                <div className="space-y-2">{renderRatingBars()}</div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         <Suspense fallback={<div className="text-center py-4">Loading reviews...</div>}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="space-y-4">
             {reviews.length > 0 ? (
-              reviews.map((review) => <ReviewCard key={review.id} review={review} />)
+              reviews.map((review) => <ReviewItem key={review.id} review={review} />)
             ) : (
-              <div className="col-span-1 md:col-span-2 text-center py-8 md:py-12">
+              <div className="text-center py-8 md:py-12">
                 <p className="text-gray-500">No reviews yet. Be the first to review this product!</p>
               </div>
             )}
