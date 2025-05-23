@@ -34,76 +34,46 @@ export function HomeReviewForm({ products }: HomeReviewFormProps) {
   const [content, setContent] = useState("")
   const [productId, setProductId] = useState(products.length > 0 ? products[0].id : "")
 
-  // Direct authentication check
+  // Simplified authentication check
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [authError, setAuthError] = useState<string | null>(null)
 
-  // Get user directly from Supabase with timeout and retry
+  // Simplified user check that doesn't rely on server-side functions
   useEffect(() => {
     const supabase = createClient()
     let isMounted = true
-    let retryCount = 0
-    const maxRetries = 2
-    const timeoutDuration = 5000 // 5 seconds timeout
 
     const getUser = async () => {
       try {
         if (!isMounted) return
         setLoading(true)
 
-        // Set a timeout to prevent hanging
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Authentication check timed out")), timeoutDuration),
-        )
-
-        // Get the session with timeout
-        const sessionPromise = supabase.auth.getSession()
-
-        // Race between timeout and actual request
+        // Simple session check
         const {
           data: { session },
-        } = (await Promise.race([sessionPromise, timeoutPromise])) as any
+          error: sessionError,
+        } = await supabase.auth.getSession()
 
         if (!isMounted) return
 
-        if (!session) {
-          console.log("No active session")
+        if (sessionError || !session) {
           setUser(null)
           setLoading(false)
           return
         }
 
-        // Get user data
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("id", session.user.id)
-          .single()
-
-        if (!isMounted) return
-
-        if (userError) {
-          console.error("User data error:", userError)
-          setUser(null)
-        } else {
-          console.log("User authenticated:", userData)
-          setUser(userData)
-        }
+        // Set basic user info from session
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          first_name: session.user.user_metadata?.first_name || "User",
+          last_name: session.user.user_metadata?.last_name || "",
+        })
       } catch (error) {
-        if (!isMounted) return
         console.error("Authentication error:", error)
-
-        // Retry logic
-        if (retryCount < maxRetries) {
-          retryCount++
-          console.log(`Retrying authentication (${retryCount}/${maxRetries})...`)
-          setTimeout(getUser, 1000) // Wait 1 second before retry
-          return
+        if (isMounted) {
+          setUser(null)
         }
-
-        // After max retries, just set as not authenticated
-        setUser(null)
       } finally {
         if (isMounted) {
           setLoading(false)
@@ -116,9 +86,18 @@ export function HomeReviewForm({ products }: HomeReviewFormProps) {
     // Set up auth state change listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
-      retryCount = 0 // Reset retry count on auth state change
-      getUser()
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          first_name: session.user.user_metadata?.first_name || "User",
+          last_name: session.user.user_metadata?.last_name || "",
+        })
+      } else {
+        setUser(null)
+      }
+      setLoading(false)
     })
 
     return () => {
@@ -130,13 +109,7 @@ export function HomeReviewForm({ products }: HomeReviewFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Double-check authentication
-    const supabase = createClient()
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
+    if (!user) {
       toast({
         title: "Authentication Error",
         description: "You need to be signed in to submit a review. Please sign in and try again.",
@@ -173,17 +146,7 @@ export function HomeReviewForm({ products }: HomeReviewFormProps) {
       formData.append("title", title)
       formData.append("content", content)
 
-      // Log the form data for debugging
-      console.log("Submitting review with data:", {
-        product_id: productId,
-        rating,
-        title,
-        content,
-        user_id: session.user.id,
-      })
-
       const result = await createReview(formData)
-      console.log("Review submission result:", result)
 
       if (result.success) {
         toast({
@@ -226,14 +189,9 @@ export function HomeReviewForm({ products }: HomeReviewFormProps) {
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
       <h3 className="text-xl font-bold mb-4">Add Your Review</h3>
 
-      {/* Authentication status with manual override */}
+      {/* Simplified authentication status */}
       {loading ? (
-        <div className="bg-blue-50 p-3 rounded-md text-sm text-blue-800 mb-4">
-          Checking authentication status...
-          <Button variant="link" className="p-0 ml-2 h-auto text-blue-800 underline" onClick={() => setLoading(false)}>
-            Skip check
-          </Button>
-        </div>
+        <div className="bg-blue-50 p-3 rounded-md text-sm text-blue-800 mb-4">Checking authentication...</div>
       ) : user ? (
         <div className="bg-green-50 p-3 rounded-md text-sm text-green-800 mb-4">
           Signed in as: {user.first_name} {user.last_name}

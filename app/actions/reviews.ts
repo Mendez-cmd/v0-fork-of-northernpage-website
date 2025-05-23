@@ -107,6 +107,33 @@ export async function createReview(formData: FormData) {
   }
 }
 
+// Add a client-safe authentication check function
+export async function checkUserAuthentication() {
+  try {
+    const supabase = createClient()
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return { authenticated: false, user: null }
+    }
+
+    // Get user data
+    const { data: userData, error: userError } = await supabase.from("users").select("*").eq("id", user.id).single()
+
+    if (userError) {
+      return { authenticated: false, user: null }
+    }
+
+    return { authenticated: true, user: userData }
+  } catch (error) {
+    return { authenticated: false, user: null }
+  }
+}
+
 export async function getReviewsByProductId(productId: string) {
   const supabase = createClient()
 
