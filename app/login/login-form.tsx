@@ -41,11 +41,29 @@ export default function LoginForm() {
           description: error.message,
         })
       } else {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-        })
-        router.push("/")
+        // Check if user is admin and redirect accordingly
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+
+        if (user) {
+          // Check user role from metadata
+          const userRole = user.user_metadata?.role
+
+          if (userRole === "admin") {
+            toast({
+              title: "Welcome back, Admin!",
+              description: "Redirecting to admin dashboard...",
+            })
+            router.push("/admin/dashboard")
+          } else {
+            toast({
+              title: "Welcome back!",
+              description: "You have successfully logged in.",
+            })
+            router.push("/")
+          }
+        }
       }
     } catch (error: any) {
       toast({

@@ -21,14 +21,14 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If accessing admin routes, check if user has admin role
+  // If accessing admin routes, check if user has admin role in metadata
   if (req.nextUrl.pathname.startsWith("/admin")) {
-    // Get user role from Supabase
     if (session) {
-      const { data: userData, error } = await supabase.from("users").select("role").eq("id", session.user.id).single()
+      // Check user metadata for admin role
+      const userRole = session.user.user_metadata?.role
 
-      // If user doesn't have admin role, redirect to home
-      if (error || !userData || userData.role !== "admin") {
+      // If user doesn't have admin role in metadata, redirect to home
+      if (userRole !== "admin") {
         return NextResponse.redirect(new URL("/", req.url))
       }
     }

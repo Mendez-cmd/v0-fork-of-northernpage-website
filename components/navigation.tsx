@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { ShoppingCart, User, X, Home, Package, Phone } from "lucide-react"
+import { ShoppingCart, User, X, Home, Package, Phone, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
 import { createClient } from "@/lib/supabase/client"
@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { useMobile } from "@/hooks/use-mobile"
 import { useScrollDirection } from "@/hooks/use-scroll-direction"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,9 +54,32 @@ export function Navigation() {
   const supabase = createClient()
   const isMobile = useMobile()
   const { scrollDirection, isAtTop } = useScrollDirection()
+  const { user, isAdmin } = useAuth()
+
+  // Check if we're in an admin page
+  const isAdminPage = pathname?.startsWith("/admin")
 
   // Determine if the header should be visible
   const shouldShowHeader = scrollDirection === "up" || isAtTop || isMobileMenuOpen
+
+  // Add the animation styles to the document
+  useEffect(() => {
+    // Check if the style element already exists
+    if (!document.getElementById("logo-animation-styles")) {
+      const styleElement = document.createElement("style")
+      styleElement.id = "logo-animation-styles"
+      styleElement.innerHTML = logoAnimationStyles
+      document.head.appendChild(styleElement)
+
+      // Clean up on unmount
+      return () => {
+        const existingStyle = document.getElementById("logo-animation-styles")
+        if (existingStyle) {
+          document.head.removeChild(existingStyle)
+        }
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const checkUser = async () => {
@@ -157,24 +181,10 @@ export function Navigation() {
     return userData.user_metadata?.profile_picture || null
   }
 
-  // Add the animation styles to the document
-  useEffect(() => {
-    // Check if the style element already exists
-    if (!document.getElementById("logo-animation-styles")) {
-      const styleElement = document.createElement("style")
-      styleElement.id = "logo-animation-styles"
-      styleElement.innerHTML = logoAnimationStyles
-      document.head.appendChild(styleElement)
-
-      // Clean up on unmount
-      return () => {
-        const existingStyle = document.getElementById("logo-animation-styles")
-        if (existingStyle) {
-          document.head.removeChild(existingStyle)
-        }
-      }
-    }
-  }, [])
+  // If we're in an admin page, don't render navigation at all
+  if (isAdminPage) {
+    return null
+  }
 
   return (
     <>
@@ -312,6 +322,20 @@ export function Navigation() {
                             Account Settings
                           </Link>
                         </DropdownMenuItem>
+                        {isAdmin && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href="/admin/dashboard"
+                                className="cursor-pointer w-full text-amber-600 font-medium"
+                              >
+                                <Shield className="h-4 w-4 mr-2" />
+                                Admin Dashboard
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
+                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={handleLogout}
@@ -491,6 +515,23 @@ export function Navigation() {
                             Wishlist
                           </Link>
                         </li>
+                        {isAdmin && (
+                          <div>
+                            <h3 className="text-gray-400 uppercase text-sm font-semibold mb-3">Admin</h3>
+                            <ul className="space-y-4">
+                              <li>
+                                <Link
+                                  href="/admin/dashboard"
+                                  className="flex items-center text-lg text-amber-500 hover:text-amber-400 font-medium"
+                                  onClick={closeMobileMenu}
+                                >
+                                  <span className="mr-2">⚙️</span>
+                                  Admin Dashboard
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+                        )}
                         <li>
                           <Button
                             variant="ghost"

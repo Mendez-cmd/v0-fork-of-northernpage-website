@@ -1,168 +1,238 @@
-import { createClient } from "@/lib/supabase/server"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+"use client"
+
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { DollarSign, ShoppingBag, Users, Package, AlertTriangle } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { SalesSummary } from "@/components/admin/dashboard/sales-summary"
 import { RecentOrders } from "@/components/admin/dashboard/recent-orders"
 import { InventoryAlerts } from "@/components/admin/dashboard/inventory-alerts"
 import { TopProducts } from "@/components/admin/dashboard/top-products"
-import { CustomerActivity } from "@/components/admin/dashboard/customer-activity"
-import { AdminActivityLog } from "@/components/admin/dashboard/admin-activity-log"
+import { useMobile } from "@/hooks/use-mobile"
+import { TrendingUp, TrendingDown, ShoppingCart, Users, Package, DollarSign, ArrowUpRight } from "lucide-react"
+import Link from "next/link"
 
-export default async function AdminDashboard() {
-  const supabase = createClient()
+export default function AdminDashboard() {
+  const isMobile = useMobile()
 
-  // Fetch summary data
-  const { data: orderCount } = await supabase.from("orders").select("id", { count: "exact" })
-
-  const { data: pendingOrderCount } = await supabase
-    .from("orders")
-    .select("id", { count: "exact" })
-    .eq("status", "pending")
-
-  const { data: userCount } = await supabase.from("users").select("id", { count: "exact" })
-
-  const { data: productCount } = await supabase.from("products").select("id", { count: "exact" })
-
-  const { data: lowStockCount } = await supabase
-    .from("products")
-    .select("id", { count: "exact" })
-    .lt("stock_quantity", 10)
-
-  // Calculate total revenue
-  const { data: orderItems } = await supabase.from("order_items").select("price, quantity")
-
-  const totalRevenue = orderItems?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0
+  const stats = [
+    {
+      title: "Revenue",
+      value: "₱124,500",
+      change: "+12.5%",
+      changeType: "positive" as const,
+      icon: DollarSign,
+      link: "/admin/analytics",
+    },
+    {
+      title: "Orders",
+      value: "1,234",
+      change: "+8.2%",
+      changeType: "positive" as const,
+      icon: ShoppingCart,
+      link: "/admin/orders",
+    },
+    {
+      title: "Customers",
+      value: "856",
+      change: "+15.3%",
+      changeType: "positive" as const,
+      icon: Users,
+      link: "/admin/customers",
+    },
+    {
+      title: "Products",
+      value: "42",
+      change: "-2.1%",
+      changeType: "negative" as const,
+      icon: Package,
+      link: "/admin/products",
+    },
+  ]
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-500 text-sm mt-2">Welcome to your admin dashboard</p>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
+      {/* Stats Grid */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon
+          const TrendIcon = stat.changeType === "positive" ? TrendingUp : TrendingDown
 
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">₱{totalRevenue.toFixed(2)}</div>
-                <p className="text-xs text-muted-foreground">+20.1% from last month</p>
-              </CardContent>
+          return (
+            <Card key={stat.title} className="overflow-hidden border-0 shadow-sm hover:shadow transition-shadow">
+              <Link href={stat.link} className="block h-full">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 pt-6 px-6">
+                  <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
+                  <div
+                    className={`p-2 rounded-lg ${
+                      stat.changeType === "positive" ? "bg-green-100" : "bg-red-100"
+                    } shadow-sm`}
+                  >
+                    <Icon className={`h-5 w-5 ${stat.changeType === "positive" ? "text-green-600" : "text-red-600"}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                  <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                  <div className="flex items-center gap-1 mt-2">
+                    <div
+                      className={`flex items-center gap-1 text-sm font-medium ${
+                        stat.changeType === "positive" ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
+                      <TrendIcon className="h-3 w-3" />
+                      {stat.change}
+                    </div>
+                    <span className="text-sm text-gray-500 ml-1">vs last month</span>
+                  </div>
+                </CardContent>
+              </Link>
             </Card>
+          )
+        })}
+      </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Orders</CardTitle>
-                <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{orderCount?.count || 0}</div>
-                <p className="text-xs text-muted-foreground">{pendingOrderCount?.count || 0} pending orders</p>
-              </CardContent>
-            </Card>
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="overview" className="space-y-8">
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+          <TabsList className="bg-gray-100 p-1 rounded-lg">
+            <TabsTrigger value="overview" className="rounded-md py-2 px-4">
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="orders" className="rounded-md py-2 px-4">
+              Orders
+            </TabsTrigger>
+            <TabsTrigger value="inventory" className="rounded-md py-2 px-4">
+              Inventory
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Customers</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{userCount?.count || 0}</div>
-                <p className="text-xs text-muted-foreground">+180 new customers this month</p>
-              </CardContent>
-            </Card>
+        <TabsContent value="overview" className="space-y-8 mt-0">
+          {/* Sales Chart */}
+          <Card className="border-0 shadow-sm overflow-hidden">
+            <CardHeader className="bg-gray-50 border-b border-gray-100 px-6 py-5">
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span className="flex items-center">
+                  <DollarSign className="h-5 w-5 text-amber-600 mr-2" />
+                  Sales Overview
+                </span>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                  <Link href="/admin/analytics">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <SalesSummary />
+            </CardContent>
+          </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Inventory</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
+          {/* Two Column Layout for Desktop, Single Column for Mobile */}
+          <div className="grid gap-8 lg:grid-cols-2">
+            {/* Recent Orders */}
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50 border-b border-gray-100 px-6 py-5">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <span className="flex items-center">
+                    <ShoppingCart className="h-5 w-5 text-blue-600 mr-2" />
+                    Recent Orders
+                  </span>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                    <Link href="/admin/orders">
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{productCount?.count || 0}</div>
-                <div className="flex items-center text-xs text-muted-foreground">
-                  <AlertTriangle className="mr-1 h-3 w-3 text-amber-500" />
-                  {lowStockCount?.count || 0} low stock items
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle>Sales Overview</CardTitle>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <SalesSummary />
-              </CardContent>
-            </Card>
-
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Latest 5 orders across the platform</CardDescription>
-              </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <RecentOrders />
               </CardContent>
             </Card>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Inventory Alerts</CardTitle>
-                <CardDescription>Products with low stock levels</CardDescription>
+            {/* Inventory Alerts */}
+            <Card className="border-0 shadow-sm overflow-hidden">
+              <CardHeader className="bg-gray-50 border-b border-gray-100 px-6 py-5">
+                <CardTitle className="text-lg flex items-center justify-between">
+                  <span className="flex items-center">
+                    <Package className="h-5 w-5 text-amber-600 mr-2" />
+                    Inventory Alerts
+                  </span>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                    <Link href="/admin/inventory">
+                      <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <InventoryAlerts />
               </CardContent>
             </Card>
-
-            <Card className="col-span-4">
-              <CardHeader>
-                <CardTitle>Top Products</CardTitle>
-                <CardDescription>Best selling products this month</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <TopProducts />
-              </CardContent>
-            </Card>
           </div>
+
+          {/* Top Products */}
+          <Card className="border-0 shadow-sm overflow-hidden">
+            <CardHeader className="bg-gray-50 border-b border-gray-100 px-6 py-5">
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span className="flex items-center">
+                  <Users className="h-5 w-5 text-purple-600 mr-2" />
+                  Top Products
+                </span>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" asChild>
+                  <Link href="/admin/products">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <TopProducts />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-            <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle>Customer Activity</CardTitle>
-                <CardDescription>New vs returning customers</CardDescription>
-              </CardHeader>
-              <CardContent className="pl-2">
-                <CustomerActivity />
-              </CardContent>
-            </Card>
+        <TabsContent value="orders" className="space-y-8 mt-0">
+          <Card className="border-0 shadow-sm overflow-hidden">
+            <CardHeader className="bg-gray-50 border-b border-gray-100 px-6 py-5">
+              <CardTitle className="text-lg flex items-center">
+                <ShoppingCart className="h-5 w-5 text-blue-600 mr-2" />
+                Recent Orders
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <RecentOrders />
+            </CardContent>
+            <CardFooter className="bg-gray-50 border-t border-gray-100 px-6 py-4">
+              <Button asChild>
+                <Link href="/admin/orders">View All Orders</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
 
-            <Card className="col-span-1">
-              <CardHeader>
-                <CardTitle>Admin Activity Log</CardTitle>
-                <CardDescription>Recent administrative actions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AdminActivityLog />
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="inventory" className="space-y-8 mt-0">
+          <Card className="border-0 shadow-sm overflow-hidden">
+            <CardHeader className="bg-gray-50 border-b border-gray-100 px-6 py-5">
+              <CardTitle className="text-lg flex items-center">
+                <Package className="h-5 w-5 text-amber-600 mr-2" />
+                Inventory Alerts
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <InventoryAlerts />
+            </CardContent>
+            <CardFooter className="bg-gray-50 border-t border-gray-100 px-6 py-4">
+              <Button asChild>
+                <Link href="/admin/inventory">Manage Inventory</Link>
+              </Button>
+            </CardFooter>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast"
 interface AuthContextType {
   user: User | null
   isLoading: boolean
+  isAdmin: boolean
   signIn: (email: string, password: string) => Promise<{ error: any | null }>
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any | null; data: any | null }>
   signOut: () => Promise<{ error: any | null }>
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
   const router = useRouter()
@@ -30,13 +32,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const {
         data: { session },
       } = await supabase.auth.getSession()
+
       setUser(session?.user || null)
+
+      // Check if user is admin
+      if (session?.user) {
+        setIsAdmin(session.user.user_metadata?.role === "admin")
+      } else {
+        setIsAdmin(false)
+      }
+
       setIsLoading(false)
 
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         setUser(session?.user || null)
+
+        // Check if user is admin
+        if (session?.user) {
+          setIsAdmin(session.user.user_metadata?.role === "admin")
+        } else {
+          setIsAdmin(false)
+        }
       })
 
       return () => {
@@ -54,11 +72,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     })
 
     if (!error) {
-      router.push("/")
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      })
+      // Get user to check if admin
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user?.user_metadata?.role === "admin") {
+        router.push("/admin/dashboard")
+        toast({
+          title: "Welcome back, Admin!",
+          description: "You have successfully logged in.",
+        })
+      } else {
+        router.push("/")
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        })
+      }
     }
 
     return { error }
@@ -162,6 +193,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         isLoading,
+        isAdmin,
         signIn,
         signUp,
         signOut,

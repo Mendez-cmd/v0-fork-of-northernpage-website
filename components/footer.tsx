@@ -1,11 +1,20 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
 import { Facebook, Instagram, Twitter, Phone, MapPin, Mail, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/hooks/use-auth"
 
 export function Footer() {
+  const { isAdmin } = useAuth()
   const currentYear = new Date().getFullYear()
+
+  // Don't show footer for admin users
+  if (isAdmin) {
+    return null
+  }
 
   return (
     <footer className="bg-black text-white">

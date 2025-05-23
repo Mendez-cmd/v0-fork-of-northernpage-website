@@ -24,17 +24,17 @@ export function SalesSummary() {
   const [period, setPeriod] = useState("yearly")
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
         <div className="space-y-1">
           <h4 className="text-sm font-medium leading-none">Sales Trend</h4>
           <p className="text-sm text-muted-foreground">
             {period === "yearly" ? "Annual" : period === "monthly" ? "Monthly" : "Weekly"} sales overview
           </p>
         </div>
-        <div className="ml-auto mr-4">
+        <div>
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -46,15 +46,44 @@ export function SalesSummary() {
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={350}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" tickLine={false} axisLine={false} />
-          <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `₱${value}`} />
-          <Tooltip formatter={(value) => [`₱${value}`, "Revenue"]} labelFormatter={(label) => `Month: ${label}`} />
-          <Line type="monotone" dataKey="total" stroke="#8884d8" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-        </LineChart>
-      </ResponsiveContainer>
+      <div className="h-[350px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 20, right: 20, left: 20, bottom: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <XAxis
+              dataKey="name"
+              tickLine={false}
+              axisLine={{ stroke: "#e5e7eb" }}
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+              dy={10}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={{ stroke: "#e5e7eb" }}
+              tick={{ fill: "#6b7280", fontSize: 12 }}
+              tickFormatter={(value) => `₱${value}`}
+              dx={-10}
+            />
+            <Tooltip
+              formatter={(value) => [`₱${value}`, "Revenue"]}
+              labelFormatter={(label) => `Month: ${label}`}
+              contentStyle={{
+                borderRadius: "8px",
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="total"
+              stroke="#d97706"
+              strokeWidth={3}
+              dot={{ r: 4, fill: "#d97706", strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{ r: 6, fill: "#d97706", strokeWidth: 2, stroke: "#fff" }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   )
 }

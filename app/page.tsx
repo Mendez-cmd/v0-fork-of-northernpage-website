@@ -8,8 +8,9 @@ import Image from "next/image"
 import { Suspense } from "react"
 import LoadingLogo from "@/components/loading-logo"
 import { ReviewCard } from "@/components/review-card"
-import { HomeReviewForm } from "@/components/home-review-form"
 import { getServerReviews } from "@/lib/server-reviews"
+import { ReviewsCarousel } from "@/components/reviews-carousel"
+import { ModernReviewForm } from "@/components/modern-review-form"
 
 // Make the page dynamic to avoid static rendering issues
 export const dynamic = "force-dynamic"
@@ -94,7 +95,7 @@ async function ReviewsSection() {
 async function ReviewFormSection() {
   try {
     const products = await getFeaturedProducts()
-    return <HomeReviewForm products={products} />
+    return <ModernReviewForm products={products} className="max-w-2xl mx-auto" />
   } catch (error) {
     console.error("Error loading products for review form:", error)
     return (
@@ -319,6 +320,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Reviews Section */}
+      <ReviewsCarousel />
+
       {/* CTA Section */}
       <section className="py-16 bg-black text-white">
         <div className="container mx-auto px-4 text-center">
@@ -329,35 +333,6 @@ export default function Home() {
           <Button asChild size="lg" className="bg-gold hover:bg-amber-500 text-black">
             <Link href="/products">Order Now</Link>
           </Button>
-        </div>
-      </section>
-
-      {/* Reviews Section */}
-      <section className="bg-gray-100 py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl text-center mb-12">Reviews</h2>
-
-          <Suspense
-            fallback={
-              <div className="flex flex-col items-center justify-center py-12">
-                <LoadingLogo size="md" showText={true} message="Loading reviews..." />
-              </div>
-            }
-          >
-            <ReviewsSection />
-          </Suspense>
-
-          <div className="mt-12">
-            <Suspense
-              fallback={
-                <div className="flex flex-col items-center justify-center py-8">
-                  <LoadingLogo size="sm" showText={true} message="Loading review form..." />
-                </div>
-              }
-            >
-              <ReviewFormSection />
-            </Suspense>
-          </div>
         </div>
       </section>
     </main>
