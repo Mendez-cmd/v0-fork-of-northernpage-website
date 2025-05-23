@@ -21,8 +21,7 @@ export function ContactInfo() {
               <Phone className="h-8 w-8 text-black" />
             </div>
             <h3 className="text-xl font-bold mb-2">Call Us</h3>
-            <p className="text-gray-600">Phone: 0-123-4567-8900</p>
-            <p className="text-gray-600">Hotline: 1-800-NORTHERN</p>
+            <p className="text-gray-600">Phone: 09773962388</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
@@ -30,8 +29,7 @@ export function ContactInfo() {
               <Mail className="h-8 w-8 text-black" />
             </div>
             <h3 className="text-xl font-bold mb-2">Email Us</h3>
-            <p className="text-gray-600">info@northernchefs.com</p>
-            <p className="text-gray-600">support@northernchefs.com</p>
+            <p className="text-gray-600">north3rnchefs@gmail.com</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
@@ -39,8 +37,7 @@ export function ContactInfo() {
               <Clock className="h-8 w-8 text-black" />
             </div>
             <h3 className="text-xl font-bold mb-2">Business Hours</h3>
-            <p className="text-gray-600">Monday - Saturday: 9AM - 7PM</p>
-            <p className="text-gray-600">Sunday: 10AM - 5PM</p>
+            <p className="text-gray-600">7AM - 8PM Daily</p>
           </div>
         </div>
       </div>

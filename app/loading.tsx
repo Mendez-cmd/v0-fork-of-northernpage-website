@@ -1,8 +1,17 @@
+"use client"
+
 import { FeaturedProductsSkeleton } from "@/components/featured-products-skeleton"
+import { motion } from "framer-motion"
 
 export default function Loading() {
   return (
-    <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="space-y-8"
+    >
       {/* Hero Section Skeleton */}
       <div className="relative py-24 bg-gray-200 animate-pulse">
         <div className="container mx-auto px-4 relative z-10 text-center">
@@ -76,6 +85,6 @@ export default function Loading() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

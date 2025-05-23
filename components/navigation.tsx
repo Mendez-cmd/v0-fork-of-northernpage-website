@@ -1,10 +1,12 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { ShoppingCart, User, X, Home, Package, Phone, Shield } from "lucide-react"
+import { ShoppingCart, User, X, Home, Package, Phone, Shield, ChevronUp, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
 import { createClient } from "@/lib/supabase/client"
@@ -41,6 +43,49 @@ const logoAnimationStyles = `
   .logo-pulse {
     animation: pulse 3s infinite ease-in-out;
   }
+  
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+  
+  .nav-indicator {
+    animation: bounce 2s infinite ease-in-out;
+  }
+  
+  .nav-indicator-hidden {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    background-color: rgba(17, 17, 17, 0.8);
+    border-radius: 0 0 8px 8px;
+    padding: 4px 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .nav-indicator-hidden:hover {
+    background-color: rgba(17, 17, 17, 0.95);
+  }
+  
+  .mobile-nav-indicator {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 39;
+    background-color: rgba(17, 17, 17, 0.8);
+    border-radius: 8px 8px 0 0;
+    padding: 4px 12px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .mobile-nav-indicator:hover {
+    background-color: rgba(17, 17, 17, 0.95);
+  }
 `
 
 export function Navigation() {
@@ -48,6 +93,7 @@ export function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [userData, setUserData] = useState<any>(null)
+  const [isNavVisible, setIsNavVisible] = useState(true)
   const pathname = usePathname()
   const { items } = useCart()
   const { toast } = useToast()
@@ -186,16 +232,40 @@ export function Navigation() {
     return null
   }
 
+  const toggleNavVisibility = (e: React.MouseEvent) => {
+    // Prevent the event from bubbling up to parent elements
+    e.stopPropagation()
+    setIsNavVisible(!isNavVisible)
+  }
+
+  // Prevent navigation links from triggering the toggle
+  const handleLinkClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+  }
+
   return (
     <>
+      {/* Desktop Navigation */}
       <header
         className={cn(
           "bg-custom-dark text-white fixed top-0 left-0 right-0 z-50 transition-all duration-300 hidden lg:block",
-          shouldShowHeader ? "translate-y-0 shadow-md" : "-translate-y-full shadow-none",
+          shouldShowHeader && isNavVisible ? "translate-y-0 shadow-md" : "-translate-y-full shadow-none",
           isAtTop ? "py-4" : "py-2",
         )}
+        onClick={toggleNavVisibility}
       >
-        <nav className="container mx-auto px-4 flex items-center justify-between">
+        {/* Navigation Toggle Indicator - Desktop */}
+        <div
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full z-50 cursor-pointer"
+          onClick={toggleNavVisibility}
+        >
+          <div className="bg-custom-dark text-gold px-3 py-1 rounded-b-md shadow-md flex items-center space-x-1">
+            <ChevronDown className="h-4 w-4 nav-indicator" />
+            <span className="text-xs font-medium">Hide</span>
+          </div>
+        </div>
+
+        <nav className="container mx-auto px-4 flex items-center justify-between" onClick={handleLinkClick}>
           {/* Desktop Navigation Links - Left Side */}
           <ul className="hidden lg:flex items-center space-x-8">
             <li>
@@ -243,7 +313,7 @@ export function Navigation() {
                   } ${isAtTop ? "logo-pulse" : ""}`}
                   priority
                 />
-                <div className="absolute inset-0 bg-gold opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-full"></div>
+                <div className="absolute inset-0 transition-transform duration-300 rounded-full"></div>
               </div>
             </Link>
           </div>
@@ -438,7 +508,6 @@ export function Navigation() {
                           }`}
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">🏠</span>
                           Home
                         </Link>
                       </li>
@@ -450,7 +519,6 @@ export function Navigation() {
                           }`}
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">🍲</span>
                           Products
                         </Link>
                       </li>
@@ -462,7 +530,6 @@ export function Navigation() {
                           }`}
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">🛒</span>
                           Order
                         </Link>
                       </li>
@@ -474,7 +541,6 @@ export function Navigation() {
                           }`}
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">📞</span>
                           Contact
                         </Link>
                       </li>
@@ -491,7 +557,6 @@ export function Navigation() {
                             className="flex items-center text-lg hover:text-gold transition-colors"
                             onClick={closeMobileMenu}
                           >
-                            <span className="mr-2">👤</span>
                             Dashboard
                           </Link>
                         </li>
@@ -501,7 +566,6 @@ export function Navigation() {
                             className="flex items-center text-lg hover:text-gold transition-colors"
                             onClick={closeMobileMenu}
                           >
-                            <span className="mr-2">📦</span>
                             My Orders
                           </Link>
                         </li>
@@ -511,7 +575,6 @@ export function Navigation() {
                             className="flex items-center text-lg hover:text-gold transition-colors"
                             onClick={closeMobileMenu}
                           >
-                            <span className="mr-2">❤️</span>
                             Wishlist
                           </Link>
                         </li>
@@ -525,7 +588,6 @@ export function Navigation() {
                                   className="flex items-center text-lg text-amber-500 hover:text-amber-400 font-medium"
                                   onClick={closeMobileMenu}
                                 >
-                                  <span className="mr-2">⚙️</span>
                                   Admin Dashboard
                                 </Link>
                               </li>
@@ -541,7 +603,6 @@ export function Navigation() {
                               closeMobileMenu()
                             }}
                           >
-                            <span className="mr-2">🚪</span>
                             Logout
                           </Button>
                         </li>
@@ -557,7 +618,6 @@ export function Navigation() {
                             className="flex items-center text-lg hover:text-gold transition-colors"
                             onClick={closeMobileMenu}
                           >
-                            <span className="mr-2">🔑</span>
                             Log-in
                           </Link>
                         </li>
@@ -567,7 +627,6 @@ export function Navigation() {
                             className="flex items-center text-lg hover:text-gold transition-colors"
                             onClick={closeMobileMenu}
                           >
-                            <span className="mr-2">✏️</span>
                             Sign-up
                           </Link>
                         </li>
@@ -584,7 +643,6 @@ export function Navigation() {
                           className="flex items-center text-lg hover:text-gold transition-colors"
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">🍗</span>
                           Chicken Pastil
                         </Link>
                       </li>
@@ -594,7 +652,6 @@ export function Navigation() {
                           className="flex items-center text-lg hover:text-gold transition-colors"
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">🌿</span>
                           Laing
                         </Link>
                       </li>
@@ -604,7 +661,6 @@ export function Navigation() {
                           className="flex items-center text-lg hover:text-gold transition-colors"
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">🐟</span>
                           Spanish Bangus
                         </Link>
                       </li>
@@ -614,7 +670,6 @@ export function Navigation() {
                           className="flex items-center text-lg hover:text-gold transition-colors"
                           onClick={closeMobileMenu}
                         >
-                          <span className="mr-2">🌶️</span>
                           Chili Garlic
                         </Link>
                       </li>
@@ -635,10 +690,28 @@ export function Navigation() {
           )}
         </nav>
       </header>
+
       {/* Bottom Navigation for Mobile */}
       <div className="lg:hidden">
-        <nav className="fixed bottom-0 left-0 right-0 bg-custom-dark border-t border-gray-800 z-40">
-          <div className="flex justify-around items-center py-2">
+        <nav
+          className={cn(
+            "fixed bottom-0 left-0 right-0 bg-custom-dark border-t border-gray-800 z-40 transition-all duration-300",
+            isNavVisible ? "translate-y-0" : "translate-y-full",
+          )}
+          onClick={toggleNavVisibility}
+        >
+          {/* Navigation Toggle Indicator - Mobile */}
+          <div
+            className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full z-50 cursor-pointer"
+            onClick={toggleNavVisibility}
+          >
+            <div className="bg-custom-dark text-gold px-3 py-1 rounded-t-md shadow-md flex items-center space-x-1">
+              <ChevronUp className="h-4 w-4 nav-indicator" />
+              <span className="text-xs font-medium">Hide</span>
+            </div>
+          </div>
+
+          <div className="flex justify-around items-center py-2" onClick={handleLinkClick}>
             <Link
               href="/"
               className={`flex flex-col items-center p-2 ${isActive("/") ? "text-gold" : "text-gray-400"}`}
@@ -681,9 +754,6 @@ export function Navigation() {
             </Link>
           </div>
         </nav>
-
-        {/* Add padding to the bottom of the page to account for the bottom navigation */}
-        <div className="h-16"></div>
       </div>
     </>
   )
