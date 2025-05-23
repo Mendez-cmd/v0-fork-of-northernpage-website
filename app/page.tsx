@@ -1,7 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { getFeaturedProducts } from "@/lib/products"
-import { getReviews } from "@/lib/reviews"
 import { DbSetupNotification } from "@/components/db-setup-notification"
 import { Card, CardContent } from "@/components/ui/card"
 import { PlaceholderImage } from "@/components/placeholder-image"
@@ -10,6 +9,7 @@ import { Suspense } from "react"
 import LoadingLogo from "@/components/loading-logo"
 import { ReviewCard } from "@/components/review-card"
 import { HomeReviewForm } from "@/components/home-review-form"
+import { getServerReviews } from "@/lib/server-reviews"
 
 // Make the page dynamic to avoid static rendering issues
 export const dynamic = "force-dynamic"
@@ -62,10 +62,8 @@ async function FeaturedProducts() {
 // Separate component for reviews to use with Suspense
 async function ReviewsSection() {
   try {
-    // Add a small delay to prevent overwhelming the database
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
-    const reviews = await getReviews()
+    // Use server-side function to get reviews
+    const reviews = await getServerReviews()
 
     if (!reviews || reviews.length === 0) {
       return (

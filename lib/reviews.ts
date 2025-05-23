@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server"
+// This file should only use client-side code since it's imported by client components
+import { createClient } from "@/lib/supabase/client"
 
 // Fallback reviews data when database is not available
 const fallbackReviews = [
@@ -66,10 +67,8 @@ const fallbackReviews = [
   },
 ]
 
-// Update the getReviews function with better error handling
+// Client-side function to get reviews
 export async function getReviews() {
-  // For now, return fallback data to avoid rate limiting issues
-  // This can be re-enabled once database issues are resolved
   try {
     const supabase = createClient()
 
@@ -106,7 +105,7 @@ export async function getReviews() {
   }
 }
 
-// Also update the other review fetching functions with similar error handling
+// Client-side function to get reviews by product ID
 export async function getReviewsByProductId(productId: string) {
   try {
     const supabase = createClient()
@@ -139,10 +138,11 @@ export async function getReviewsByProductId(productId: string) {
   }
 }
 
+// Client-side function to get reviews by user ID
 export async function getReviewsByUserId(userId: string) {
-  const supabase = createClient()
-
   try {
+    const supabase = createClient()
+
     const { data, error } = await supabase
       .from("reviews")
       .select(`
@@ -167,57 +167,11 @@ export async function getReviewsByUserId(userId: string) {
   }
 }
 
-export async function createReview(review: {
-  product_id: string
-  user_id: string
-  rating: number
-  title: string
-  content: string
-  images?: string[]
-}) {
-  const supabase = createClient()
-
-  try {
-    // Check if user already reviewed this product
-    const { data: existingReview } = await supabase
-      .from("reviews")
-      .select("id")
-      .eq("product_id", review.product_id)
-      .eq("user_id", review.user_id)
-      .single()
-
-    if (existingReview) {
-      throw new Error("You have already reviewed this product")
-    }
-
-    const { data, error } = await supabase
-      .from("reviews")
-      .insert([
-        {
-          ...review,
-          helpful_count: 0,
-          status: "approved", // Auto-approve for now
-        },
-      ])
-      .select()
-      .single()
-
-    if (error) {
-      console.error("Error creating review:", error)
-      throw error
-    }
-
-    return data
-  } catch (error) {
-    console.error("Exception creating review:", error)
-    throw error
-  }
-}
-
+// Client-side function to get product rating stats
 export async function getProductRatingStats(productId: string) {
-  const supabase = createClient()
-
   try {
+    const supabase = createClient()
+
     const { data, error } = await supabase
       .from("reviews")
       .select("rating")
